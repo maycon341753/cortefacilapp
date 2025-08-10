@@ -12,16 +12,13 @@ RewriteEngine On
 # Redirecionar para index.html como página padrão
 DirectoryIndex index.html index.php
 
-# Redirecionar páginas PHP antigas para versões HTML
-RewriteRule ^index\.php$ /cortefacil/cortefacilapp/index.html [R=301,L]
-RewriteRule ^login\.php$ /cortefacil/cortefacilapp/login.html [R=301,L]
-RewriteRule ^register\.php$ /cortefacil/cortefacilapp/register.html [R=301,L]
-
-# Redirecionar módulos antigos para dashboards
-RewriteRule ^cliente/dashboard\.php$ /cortefacil/cortefacilapp/dashboard-client.html [R=301,L]
-RewriteRule ^cliente/agendar\.php$ /cortefacil/cortefacilapp/booking.html [R=301,L]
-RewriteRule ^cliente/pagamento\.php$ /cortefacil/cortefacilapp/payment.html [R=301,L]
-RewriteRule ^parceiro/dashboard\.php$ /cortefacil/cortefacilapp/dashboard-partner.html [R=301,L]
+# URLs amigáveis e redirecionamentos
+RewriteRule ^entrar/?$ login.html [L]
+RewriteRule ^cadastro/?$ register.html [L]
+RewriteRule ^agendar/?$ booking.html [L]
+RewriteRule ^pagamento/?$ payment.html [L]
+RewriteRule ^cliente/?$ dashboard-client.html [L]
+RewriteRule ^parceiro/?$ dashboard-partner.html [L]
 
 # ========================================
 # SEGURANÇA
@@ -265,17 +262,7 @@ ErrorDocument 404 /cortefacil/cortefacilapp/index.html
 ErrorDocument 403 /cortefacil/cortefacilapp/index.html
 ErrorDocument 500 /cortefacil/cortefacilapp/index.html
 
-# ========================================
-# REDIRECIONAMENTOS AMIGÁVEIS (OPCIONAL)
-# ========================================
 
-# URLs amigáveis para as páginas principais
-RewriteRule ^entrar/?$ login.html [L]
-RewriteRule ^cadastro/?$ register.html [L]
-RewriteRule ^agendar/?$ booking.html [L]
-RewriteRule ^pagamento/?$ payment.html [L]
-RewriteRule ^cliente/?$ dashboard-client.html [L]
-RewriteRule ^parceiro/?$ dashboard-partner.html [L]
 
 # ========================================
 # CONFIGURAÇÕES ESPECÍFICAS DO PROJETO
@@ -291,5 +278,5 @@ RewriteRule ^parceiro/?$ dashboard-partner.html [L]
 # Configurações para SPA (Single Page Application)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/(api|assets|cliente|parceiro|config|database|includes)/
+RewriteCond %{REQUEST_URI} !^/(assets|database)/
 RewriteRule ^(.*)$ index.html [QSA,L]

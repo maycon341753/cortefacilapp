@@ -132,13 +132,13 @@ cortefacilapp/
 │   │   └── style.css            # 🎨 Estilos principais modernos
 │   └── js/
 │       └── main.js              # ⚡ JavaScript com funcionalidades avançadas
-├── api/                          # 📋 APIs antigas (mantidas para referência)
-├── cliente/                      # 📋 Módulos PHP antigos (mantidos)
-├── parceiro/                     # 📋 Módulos PHP antigos (mantidos)
-├── config/                       # 📋 Configurações antigas (mantidas)
-├── database/                     # 📋 Scripts antigos (mantidos)
-├── includes/                     # 📋 Includes antigos (mantidos)
-└── README.md                     # 📖 Documentação atualizada
+├── database/                     # 📋 Scripts de referência (SQL)
+│   ├── README_BANCO.md
+│   ├── schema.sql
+│   └── usuarios_teste.sql
+├── .htaccess                     # ⚙️ Configurações do servidor
+├── DEMO.md                       # 🎯 Guia de demonstração
+└── README.md                     # 📖 Documentação
 ```
 
 ### 🎯 Arquivos Principais (HTML/CSS/JS)
