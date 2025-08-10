@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CorteFácil</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">CorteFácil</a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="index.html#features">Recursos</a></li>
+                        <li><a href="index.html#how-it-works">Como Funciona</a></li>
+                        <li><a href="register.html">Cadastro</a></li>
+                    </ul>
+                    <button class="mobile-menu-toggle">☰</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container" style="padding: 4rem 0;">
+        <div class="row">
+            <div class="col-md-6" style="margin: 0 auto;">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2 class="card-title">Entrar na Conta</h2>
+                        <p>Acesse sua conta para gerenciar agendamentos</p>
+                    </div>
+
+                    <!-- Formulário de Login -->
+                    <form id="login-form" data-validate>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required 
+                                   placeholder="seu@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Senha</label>
+                            <input type="password" name="senha" class="form-control" required 
+                                   placeholder="Sua senha">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-check">
+                                    <input type="checkbox" name="lembrar"> Lembrar-me
+                                </label>
+                                <a href="#" class="forgot-password">Esqueci minha senha</a>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
+                    </form>
+
+                    <!-- Login Rápido para Demonstração -->
+                    <div class="demo-login">
+                        <hr style="margin: 2rem 0;">
+                        <h4 class="text-center mb-3">Login Rápido (Demonstração)</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline w-100 mb-2" 
+                                        onclick="quickLogin('cliente')">
+                                    👤 Entrar como Cliente
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline w-100 mb-2" 
+                                        onclick="quickLogin('parceiro')">
+                                    ✂️ Entrar como Salão
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <p>Não tem uma conta? <a href="register.html">Cadastre-se gratuitamente</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Recuperação de Senha -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h3>Recuperar Senha</h3>
+            <p>Digite seu email para receber as instruções de recuperação:</p>
+            <form id="forgot-password-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Enviar Instruções</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CorteFácil</h3>
+                    <p>A plataforma que conecta clientes e salões de beleza de forma simples e eficiente.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links Rápidos</h3>
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="index.html#features">Recursos</a></li>
+                        <li><a href="index.html#how-it-works">Como Funciona</a></li>
+                        <li><a href="register.html">Cadastro</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Para Salões</h3>
+                    <ul>
+                        <li><a href="register.html">Cadastre seu Salão</a></li>
+                        <li><a href="dashboard-salon.html">Dashboard</a></li>
+                        <li><a href="#suporte">Suporte</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Para Clientes</h3>
+                    <ul>
+                        <li><a href="register.html">Criar Conta</a></li>
+                        <li><a href="booking.html">Agendar Serviço</a></li>
+                        <li><a href="dashboard-client.html">Meus Agendamentos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CorteFácil. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script>
+        // Funcionalidade específica da página de login
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const forgotPasswordLink = document.querySelector('.forgot-password');
+            const forgotPasswordModal = document.getElementById('forgot-password-modal');
+            const forgotPasswordForm = document.getElementById('forgot-password-form');
+            
+            // Estilo adicional para a página
+            const style = document.createElement('style');
+            style.textContent = `
+                .form-check {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-size: 0.9rem;
+                }
+                
+                .form-check input[type="checkbox"] {
+                    width: auto;
+                    margin: 0;
+                }
+                
+                .forgot-password {
+                    color: #667eea;
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                }
+                
+                .forgot-password:hover {
+                    text-decoration: underline;
+                }
+                
+                .demo-login {
+                    background: #f8f9fa;
+                    padding: 1.5rem;
+                    border-radius: 10px;
+                    margin-top: 1rem;
+                }
+                
+                .demo-login h4 {
+                    color: #666;
+                    font-size: 1rem;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Submissão do formulário de login
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (validateForm(this)) {
+                    const email = this.email.value;
+                    const senha = this.senha.value;
+                    
+                    // Simular autenticação
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Entrando...';
+                    
+                    setTimeout(() => {
+                        // Simular diferentes tipos de usuário baseado no email
+                        if (email.includes('salao') || email.includes('parceiro')) {
+                            localStorage.setItem('userType', 'parceiro');
+                            localStorage.setItem('userName', 'Salão Exemplo');
+                            window.location.href = 'dashboard-salon.html';
+                        } else {
+                            localStorage.setItem('userType', 'cliente');
+                            localStorage.setItem('userName', 'Cliente Exemplo');
+                            window.location.href = 'dashboard-client.html';
+                        }
+                    }, 1500);
+                }
+            });
+            
+            // Modal de recuperação de senha
+            forgotPasswordLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                forgotPasswordModal.style.display = 'block';
+            });
+            
+            forgotPasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = this.email.value;
+                if (email) {
+                    notifications.show('Instruções enviadas para seu email!', 'success');
+                    forgotPasswordModal.style.display = 'none';
+                    this.reset();
+                }
+            });
+        });
+        
+        // Função de login rápido para demonstração
+        function quickLogin(type) {
+            const submitBtn = document.querySelector('#login-form button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Entrando...';
+            
+            setTimeout(() => {
+                localStorage.setItem('userType', type);
+                localStorage.setItem('userName', type === 'cliente' ? 'Cliente Demo' : 'Salão Demo');
+                
+                if (type === 'cliente') {
+                    window.location.href = 'dashboard-client.html';
+                } else {
+                    window.location.href = 'dashboard-salon.html';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

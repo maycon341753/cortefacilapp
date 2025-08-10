@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Agendamentos - CorteFácil</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">CorteFácil</a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="booking.html" class="btn btn-primary">Novo Agendamento</a></li>
+                        <li><a href="#" onclick="logout()">Sair</a></li>
+                    </ul>
+                    <button class="mobile-menu-toggle">☰</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container" style="padding: 2rem 0;">
+        <!-- Cabeçalho do Dashboard -->
+        <div class="dashboard-header">
+            <h1>Meus Agendamentos</h1>
+            <p>Gerencie seus agendamentos e histórico de serviços</p>
+        </div>
+
+        <!-- Estatísticas Rápidas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 id="total-appointments">0</h3>
+                    <p>Total de Agendamentos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-info">
+                    <h3 id="pending-appointments">0</h3>
+                    <p>Agendamentos Pendentes</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <h3 id="completed-appointments">0</h3>
+                    <p>Serviços Concluídos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3 id="total-spent">R$ 0</h3>
+                    <p>Total Gasto</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-section">
+            <div class="filters">
+                <select id="status-filter" class="form-control form-select">
+                    <option value="">Todos os Status</option>
+                    <option value="agendado">Agendado</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                
+                <input type="date" id="date-filter" class="form-control" placeholder="Filtrar por data">
+                
+                <button class="btn btn-outline" onclick="clearFilters()">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <!-- Lista de Agendamentos -->
+        <div class="appointments-section">
+            <div class="section-header">
+                <h2>Seus Agendamentos</h2>
+                <a href="booking.html" class="btn btn-primary">+ Novo Agendamento</a>
+            </div>
+            
+            <div id="appointments-list" class="appointments-list">
+                <!-- Agendamentos serão carregados dinamicamente -->
+            </div>
+            
+            <div id="no-appointments" class="no-data" style="display: none;">
+                <div class="no-data-icon">📅</div>
+                <h3>Nenhum agendamento encontrado</h3>
+                <p>Você ainda não possui agendamentos. Que tal fazer o primeiro?</p>
+                <a href="booking.html" class="btn btn-primary">Fazer Agendamento</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Cancelamento -->
+    <div id="cancel-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cancelar Agendamento</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar este agendamento?</p>
+                <p><strong>Atenção:</strong> Cancelamentos com menos de 24h de antecedência podem estar sujeitos a taxas.</p>
+                
+                <div class="form-group">
+                    <label class="form-label">Motivo do cancelamento (opcional)</label>
+                    <textarea id="cancel-reason" class="form-control" rows="3" placeholder="Informe o motivo do cancelamento..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCancelModal()">Manter Agendamento</button>
+                <button class="btn btn-danger" onclick="confirmCancel()">Confirmar Cancelamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Reagendamento -->
+    <div id="reschedule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reagendar Serviço</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nova Data</label>
+                    <input type="date" id="new-date" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Novo Horário</label>
+                    <select id="new-time" class="form-control form-select" required>
+                        <option value="">Selecione um horário</option>
+                        <option value="09:00">09:00</option>
+                        <option value="10:00">10:00</option>
+                        <option value="11:00">11:00</option>
+                        <option value="14:00">14:00</option>
+                        <option value="15:00">15:00</option>
+                        <option value="16:00">16:00</option>
+                        <option value="17:00">17:00</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRescheduleModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmReschedule()">Confirmar Reagendamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CorteFácil</h3>
+                    <p>A plataforma que conecta clientes e salões de beleza de forma simples e eficiente.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links Rápidos</h3>
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="booking.html">Novo Agendamento</a></li>
+                        <li><a href="dashboard-client.html">Meus Agendamentos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CorteFácil. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se usuário está logado
+            if (!localStorage.getItem('userType') || localStorage.getItem('userType') !== 'cliente') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Estilos específicos da página
+            const style = document.createElement('style');
+            style.textContent = `
+                .dashboard-header {
+                    text-align: center;
+                    margin-bottom: 3rem;
+                }
+                
+                .dashboard-header h1 {
+                    color: #2d3748;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 1.5rem;
+                    margin-bottom: 3rem;
+                }
+                
+                .stat-card {
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 15px;
+                    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+                    display: flex;
+                    align-items: center;
+                    transition: transform 0.3s ease;
+                }
+                
+                .stat-card:hover {
+                    transform: translateY(-5px);
+                }
+                
+                .stat-icon {
+                    font-size: 3rem;
+                    margin-right: 1.5rem;
+                }
+                
+                .stat-info h3 {
+                    font-size: 2rem;
+                    font-weight: bold;
+                    color: #667eea;
+                    margin: 0;
+                }
+                
+                .stat-info p {
+                    margin: 0;
+                    color: #6c757d;
+                }
+                
+                .filters-section {
+                    margin-bottom: 2rem;
+                }
+                
+                .filters {
+                    display: flex;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    align-items: center;
+                }
+                
+                .filters .form-control {
+                    max-width: 200px;
+                }
+                
+                .section-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 2rem;
+                }
+                
+                .appointments-list {
+                    display: grid;
+                    gap: 1.5rem;
+                }
+                
+                .appointment-card {
+                    background: white;
+                    border-radius: 15px;
+                    padding: 2rem;
+                    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+                    transition: transform 0.3s ease;
+                }
+                
+                .appointment-card:hover {
+                    transform: translateY(-2px);
+                }
+                
+                .appointment-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 1.5rem;
+                }
+                
+                .appointment-info h3 {
+                    margin: 0 0 0.5rem 0;
+                    color: #2d3748;
+                }
+                
+                .appointment-info p {
+                    margin: 0.25rem 0;
+                    color: #6c757d;
+                }
+                
+                .appointment-status {
+                    padding: 0.5rem 1rem;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                }
+                
+                .status-agendado {
+                    background: #fff3cd;
+                    color: #856404;
+                }
+                
+                .status-confirmado {
+                    background: #d4edda;
+                    color: #155724;
+                }
+                
+                .status-concluido {
+                    background: #d1ecf1;
+                    color: #0c5460;
+                }
+                
+                .status-cancelado {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+                
+                .appointment-actions {
+                    display: flex;
+                    gap: 0.5rem;
+                    margin-top: 1rem;
+                }
+                
+                .appointment-actions .btn {
+                    padding: 0.5rem 1rem;
+                    font-size: 0.9rem;
+                }
+                
+                .no-data {
+                    text-align: center;
+                    padding: 4rem 2rem;
+                    color: #6c757d;
+                }
+                
+                .no-data-icon {
+                    font-size: 4rem;
+                    margin-bottom: 1rem;
+                }
+                
+                @media (max-width: 768px) {
+                    .appointment-header {
+                        flex-direction: column;
+                        gap: 1rem;
+                    }
+                    
+                    .appointment-actions {
+                        flex-direction: column;
+                    }
+                    
+                    .filters {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+                    
+                    .filters .form-control {
+                        max-width: none;
+                    }
+                    
+                    .section-header {
+                        flex-direction: column;
+                        gap: 1rem;
+                        text-align: center;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Configurar data mínima para reagendamento
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('new-date').min = today;
+            
+            // Carregar dados
+            loadAppointments();
+            updateStats();
+            
+            // Configurar filtros
+            document.getElementById('status-filter').addEventListener('change', filterAppointments);
+            document.getElementById('date-filter').addEventListener('change', filterAppointments);
+            
+            // Configurar modais
+            setupModals();
+        });
+        
+        let appointments = [];
+        let currentAppointmentId = null;
+        
+        function loadAppointments() {
+            // Simular dados de agendamentos
+            appointments = [
+                {
+                    id: 1,
+                    salon: 'Salão Beleza Total',
+                    service: 'Corte Feminino',
+                    date: '2024-12-20',
+                    time: '14:00',
+                    professional: 'Maria Silva',
+                    price: 35.00,
+                    status: 'confirmado'
+                },
+                {
+                    id: 2,
+                    salon: 'Studio Hair & Beauty',
+                    service: 'Coloração',
+                    date: '2024-12-15',
+                    time: '10:00',
+                    professional: 'Ana Costa',
+                    price: 80.00,
+                    status: 'concluido'
+                },
+                {
+                    id: 3,
+                    salon: 'Espaço Glamour',
+                    service: 'Escova',
+                    date: '2024-12-25',
+                    time: '16:00',
+                    professional: 'João Santos',
+                    price: 60.00,
+                    status: 'agendado'
+                }
+            ];
+            
+            renderAppointments(appointments);
+        }
+        
+        function renderAppointments(appointmentsToRender) {
+            const container = document.getElementById('appointments-list');
+            const noAppointments = document.getElementById('no-appointments');
+            
+            if (appointmentsToRender.length === 0) {
+                container.style.display = 'none';
+                noAppointments.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            noAppointments.style.display = 'none';
+            
+            container.innerHTML = appointmentsToRender.map(appointment => `
+                <div class="appointment-card">
+                    <div class="appointment-header">
+                        <div class="appointment-info">
+                            <h3>${appointment.salon}</h3>
+                            <p><strong>Serviço:</strong> ${appointment.service}</p>
+                            <p><strong>Data:</strong> ${new Date(appointment.date).toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Horário:</strong> ${appointment.time}</p>
+                            <p><strong>Profissional:</strong> ${appointment.professional}</p>
+                            <p><strong>Valor:</strong> R$ ${appointment.price.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        <div class="appointment-status status-${appointment.status}">
+                            ${getStatusText(appointment.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="appointment-actions">
+                        ${getActionButtons(appointment)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'agendado': 'Agendado',
+                'confirmado': 'Confirmado',
+                'concluido': 'Concluído',
+                'cancelado': 'Cancelado'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function getActionButtons(appointment) {
+            const today = new Date();
+            const appointmentDate = new Date(appointment.date);
+            
+            if (appointment.status === 'cancelado' || appointment.status === 'concluido') {
+                return '<button class="btn btn-outline" onclick="bookAgain()">Agendar Novamente</button>';
+            }
+            
+            if (appointmentDate > today) {
+                return `
+                    <button class="btn btn-outline" onclick="rescheduleAppointment(${appointment.id})">Reagendar</button>
+                    <button class="btn btn-danger" onclick="cancelAppointment(${appointment.id})">Cancelar</button>
+                `;
+            }
+            
+            return '';
+        }
+        
+        function updateStats() {
+            const total = appointments.length;
+            const pending = appointments.filter(a => a.status === 'agendado' || a.status === 'confirmado').length;
+            const completed = appointments.filter(a => a.status === 'concluido').length;
+            const totalSpent = appointments
+                .filter(a => a.status === 'concluido')
+                .reduce((sum, a) => sum + a.price, 0);
+            
+            document.getElementById('total-appointments').textContent = total;
+            document.getElementById('pending-appointments').textContent = pending;
+            document.getElementById('completed-appointments').textContent = completed;
+            document.getElementById('total-spent').textContent = `R$ ${totalSpent.toFixed(2).replace('.', ',')}`;
+        }
+        
+        function filterAppointments() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const dateFilter = document.getElementById('date-filter').value;
+            
+            let filtered = appointments;
+            
+            if (statusFilter) {
+                filtered = filtered.filter(a => a.status === statusFilter);
+            }
+            
+            if (dateFilter) {
+                filtered = filtered.filter(a => a.date === dateFilter);
+            }
+            
+            renderAppointments(filtered);
+        }
+        
+        function clearFilters() {
+            document.getElementById('status-filter').value = '';
+            document.getElementById('date-filter').value = '';
+            renderAppointments(appointments);
+        }
+        
+        function cancelAppointment(id) {
+            currentAppointmentId = id;
+            document.getElementById('cancel-modal').style.display = 'flex';
+        }
+        
+        function rescheduleAppointment(id) {
+            currentAppointmentId = id;
+            document.getElementById('reschedule-modal').style.display = 'flex';
+        }
+        
+        function confirmCancel() {
+            const reason = document.getElementById('cancel-reason').value;
+            
+            // Atualizar status do agendamento
+            const appointment = appointments.find(a => a.id === currentAppointmentId);
+            if (appointment) {
+                appointment.status = 'cancelado';
+                renderAppointments(appointments);
+                updateStats();
+                notifications.show('Agendamento cancelado com sucesso!', 'success');
+            }
+            
+            closeCancelModal();
+        }
+        
+        function confirmReschedule() {
+            const newDate = document.getElementById('new-date').value;
+            const newTime = document.getElementById('new-time').value;
+            
+            if (!newDate || !newTime) {
+                notifications.show('Por favor, selecione uma nova data e horário.', 'error');
+                return;
+            }
+            
+            // Atualizar dados do agendamento
+            const appointment = appointments.find(a => a.id === currentAppointmentId);
+            if (appointment) {
+                appointment.date = newDate;
+                appointment.time = newTime;
+                renderAppointments(appointments);
+                notifications.show('Agendamento reagendado com sucesso!', 'success');
+            }
+            
+            closeRescheduleModal();
+        }
+        
+        function closeCancelModal() {
+            document.getElementById('cancel-modal').style.display = 'none';
+            document.getElementById('cancel-reason').value = '';
+            currentAppointmentId = null;
+        }
+        
+        function closeRescheduleModal() {
+            document.getElementById('reschedule-modal').style.display = 'none';
+            document.getElementById('new-date').value = '';
+            document.getElementById('new-time').value = '';
+            currentAppointmentId = null;
+        }
+        
+        function bookAgain() {
+            window.location.href = 'booking.html';
+        }
+        
+        function setupModals() {
+            // Fechar modais ao clicar no X ou fora do modal
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            });
+            
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

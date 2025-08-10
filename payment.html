@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento - CorteFácil</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">CorteFácil</a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="dashboard-client.html">Meus Agendamentos</a></li>
+                        <li><a href="#" onclick="logout()">Sair</a></li>
+                    </ul>
+                    <button class="mobile-menu-toggle">☰</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container" style="padding: 2rem 0;">
+        <div class="row">
+            <div class="col-md-8" style="margin: 0 auto;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Finalizar Pagamento</h2>
+                        <p>Complete seu agendamento realizando o pagamento</p>
+                    </div>
+
+                    <div class="row">
+                        <!-- Resumo do Pedido -->
+                        <div class="col-md-5">
+                            <div class="order-summary">
+                                <h3>Resumo do Agendamento</h3>
+                                <div class="summary-card">
+                                    <div class="summary-item">
+                                        <span class="label">Salão:</span>
+                                        <span class="value" id="payment-salon">Salão Beleza Total</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Serviço:</span>
+                                        <span class="value" id="payment-service">Corte Feminino</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Data:</span>
+                                        <span class="value" id="payment-date">15/12/2024</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Horário:</span>
+                                        <span class="value" id="payment-time">14:00</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="label">Profissional:</span>
+                                        <span class="value" id="payment-professional">Maria Silva</span>
+                                    </div>
+                                    <hr>
+                                    <div class="summary-item total">
+                                        <span class="label">Total:</span>
+                                        <span class="value" id="payment-total">R$ 35,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulário de Pagamento -->
+                        <div class="col-md-7">
+                            <form id="payment-form" data-validate>
+                                <h3>Método de Pagamento</h3>
+                                
+                                <!-- Seleção do método de pagamento -->
+                                <div class="payment-methods">
+                                    <div class="payment-method" data-method="credit">
+                                        <input type="radio" name="payment_method" value="credit" id="credit" checked>
+                                        <label for="credit">
+                                            <div class="method-icon">💳</div>
+                                            <div class="method-info">
+                                                <strong>Cartão de Crédito</strong>
+                                                <small>Visa, Mastercard, Elo</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="payment-method" data-method="debit">
+                                        <input type="radio" name="payment_method" value="debit" id="debit">
+                                        <label for="debit">
+                                            <div class="method-icon">💳</div>
+                                            <div class="method-info">
+                                                <strong>Cartão de Débito</strong>
+                                                <small>Pagamento à vista</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="payment-method" data-method="pix">
+                                        <input type="radio" name="payment_method" value="pix" id="pix">
+                                        <label for="pix">
+                                            <div class="method-icon">📱</div>
+                                            <div class="method-info">
+                                                <strong>PIX</strong>
+                                                <small>Pagamento instantâneo</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Formulário de Cartão -->
+                                <div id="card-form" class="payment-form-section">
+                                    <div class="form-group">
+                                        <label class="form-label">Número do Cartão</label>
+                                        <input type="text" name="card_number" class="form-control" 
+                                               placeholder="1234 5678 9012 3456" maxlength="19" required>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Validade</label>
+                                                <input type="text" name="card_expiry" class="form-control" 
+                                                       placeholder="MM/AA" maxlength="5" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">CVV</label>
+                                                <input type="text" name="card_cvv" class="form-control" 
+                                                       placeholder="123" maxlength="4" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Nome no Cartão</label>
+                                        <input type="text" name="card_name" class="form-control" 
+                                               placeholder="Nome como está no cartão" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Parcelas</label>
+                                        <select name="installments" class="form-control form-select" required>
+                                            <option value="1">1x de R$ 35,00 (à vista)</option>
+                                            <option value="2">2x de R$ 17,50</option>
+                                            <option value="3">3x de R$ 11,67</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- PIX -->
+                                <div id="pix-form" class="payment-form-section" style="display: none;">
+                                    <div class="pix-info">
+                                        <div class="pix-qr">
+                                            <div class="qr-placeholder">
+                                                📱<br>
+                                                QR Code PIX<br>
+                                                <small>Escaneie com seu app</small>
+                                            </div>
+                                        </div>
+                                        <p>Ou copie o código PIX:</p>
+                                        <div class="pix-code">
+                                            <input type="text" readonly value="00020126580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426614174000" class="form-control">
+                                            <button type="button" class="btn btn-outline" onclick="copyPixCode()">Copiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100" id="pay-button">
+                                    Finalizar Pagamento
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CorteFácil</h3>
+                    <p>A plataforma que conecta clientes e salões de beleza de forma simples e eficiente.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links Rápidos</h3>
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="dashboard-client.html">Meus Agendamentos</a></li>
+                        <li><a href="booking.html">Novo Agendamento</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CorteFácil. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se usuário está logado
+            if (!localStorage.getItem('userType')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Estilos específicos da página
+            const style = document.createElement('style');
+            style.textContent = `
+                .order-summary {
+                    background: #f8f9fa;
+                    padding: 1.5rem;
+                    border-radius: 10px;
+                    margin-bottom: 2rem;
+                }
+                
+                .summary-card {
+                    background: white;
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                
+                .summary-item {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 0.75rem;
+                    padding-bottom: 0.75rem;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                
+                .summary-item:last-child {
+                    border-bottom: none;
+                    margin-bottom: 0;
+                    padding-bottom: 0;
+                }
+                
+                .summary-item.total {
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    color: #667eea;
+                    border-top: 2px solid #667eea;
+                    padding-top: 0.75rem;
+                    margin-top: 0.75rem;
+                }
+                
+                .payment-methods {
+                    margin: 1.5rem 0;
+                }
+                
+                .payment-method {
+                    border: 2px solid #e1e5e9;
+                    border-radius: 10px;
+                    margin-bottom: 1rem;
+                    transition: all 0.3s ease;
+                }
+                
+                .payment-method:hover {
+                    border-color: #667eea;
+                }
+                
+                .payment-method input[type="radio"] {
+                    display: none;
+                }
+                
+                .payment-method label {
+                    display: flex;
+                    align-items: center;
+                    padding: 1rem;
+                    cursor: pointer;
+                    margin: 0;
+                }
+                
+                .payment-method input[type="radio"]:checked + label {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 8px;
+                }
+                
+                .method-icon {
+                    font-size: 2rem;
+                    margin-right: 1rem;
+                }
+                
+                .method-info strong {
+                    display: block;
+                    margin-bottom: 0.25rem;
+                }
+                
+                .method-info small {
+                    opacity: 0.8;
+                }
+                
+                .payment-form-section {
+                    margin-top: 2rem;
+                }
+                
+                .pix-info {
+                    text-align: center;
+                    padding: 2rem;
+                }
+                
+                .pix-qr {
+                    margin-bottom: 2rem;
+                }
+                
+                .qr-placeholder {
+                    width: 200px;
+                    height: 200px;
+                    border: 2px dashed #ccc;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto;
+                    border-radius: 10px;
+                    background: #f8f9fa;
+                    font-size: 2rem;
+                }
+                
+                .pix-code {
+                    display: flex;
+                    gap: 1rem;
+                    margin-top: 1rem;
+                }
+                
+                .pix-code input {
+                    flex: 1;
+                    font-family: monospace;
+                    font-size: 0.9rem;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Carregar dados do agendamento da URL
+            loadBookingData();
+            
+            // Configurar métodos de pagamento
+            setupPaymentMethods();
+            
+            // Configurar máscaras de cartão
+            setupCardMasks();
+            
+            // Submissão do formulário
+            document.getElementById('payment-form').addEventListener('submit', processPayment);
+        });
+        
+        function loadBookingData() {
+            // Simular dados do agendamento (normalmente viria da URL ou localStorage)
+            const bookingData = {
+                salon: 'Salão Beleza Total',
+                service: 'Corte Feminino',
+                date: new Date().toLocaleDateString('pt-BR'),
+                time: '14:00',
+                professional: 'Maria Silva',
+                price: 35.00
+            };
+            
+            document.getElementById('payment-salon').textContent = bookingData.salon;
+            document.getElementById('payment-service').textContent = bookingData.service;
+            document.getElementById('payment-date').textContent = bookingData.date;
+            document.getElementById('payment-time').textContent = bookingData.time;
+            document.getElementById('payment-professional').textContent = bookingData.professional;
+            document.getElementById('payment-total').textContent = `R$ ${bookingData.price.toFixed(2).replace('.', ',')}`;
+        }
+        
+        function setupPaymentMethods() {
+            const methods = document.querySelectorAll('input[name="payment_method"]');
+            const cardForm = document.getElementById('card-form');
+            const pixForm = document.getElementById('pix-form');
+            
+            methods.forEach(method => {
+                method.addEventListener('change', function() {
+                    if (this.value === 'pix') {
+                        cardForm.style.display = 'none';
+                        pixForm.style.display = 'block';
+                    } else {
+                        cardForm.style.display = 'block';
+                        pixForm.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        function setupCardMasks() {
+            // Máscara para número do cartão
+            const cardNumber = document.querySelector('input[name="card_number"]');
+            cardNumber.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                this.value = value;
+            });
+            
+            // Máscara para validade
+            const cardExpiry = document.querySelector('input[name="card_expiry"]');
+            cardExpiry.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                this.value = value;
+            });
+            
+            // Máscara para CVV
+            const cardCvv = document.querySelector('input[name="card_cvv"]');
+            cardCvv.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
+        
+        function processPayment(e) {
+            e.preventDefault();
+            
+            const payButton = document.getElementById('pay-button');
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            
+            payButton.disabled = true;
+            payButton.textContent = 'Processando...';
+            
+            // Simular processamento do pagamento
+            setTimeout(() => {
+                if (paymentMethod === 'pix') {
+                    notifications.show('Aguardando confirmação do PIX...', 'info');
+                    
+                    // Simular confirmação do PIX
+                    setTimeout(() => {
+                        notifications.show('Pagamento confirmado! Agendamento realizado com sucesso.', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'dashboard-client.html';
+                        }, 2000);
+                    }, 3000);
+                } else {
+                    notifications.show('Pagamento aprovado! Agendamento confirmado.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard-client.html';
+                    }, 2000);
+                }
+            }, 2000);
+        }
+        
+        function copyPixCode() {
+            const pixCode = document.querySelector('.pix-code input');
+            pixCode.select();
+            document.execCommand('copy');
+            notifications.show('Código PIX copiado!', 'success');
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

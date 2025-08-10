@@ -1,6 +1,6 @@
-# CorteFácil - Sistema SaaS de Agendamentos para Salões de Beleza
+# CorteFácil - Sistema de Agendamentos (Versão HTML/CSS/JS)
 
-Sistema completo de agendamentos desenvolvido em PHP + JavaScript com MySQL, funcionando localmente via XAMPP.
+Sistema completo de agendamentos convertido para usar apenas **HTML**, **CSS** e **JavaScript**, eliminando dependências de PHP e MySQL. Versão moderna e responsiva com dados simulados.
 
 ## 📋 Características do Sistema
 
@@ -45,45 +45,46 @@ Sistema completo de agendamentos desenvolvido em PHP + JavaScript com MySQL, fun
 ## 🚀 Instalação e Configuração
 
 ### Pré-requisitos
-- XAMPP instalado (Apache + MySQL + PHP)
-- Navegador web moderno
+- Servidor web local (XAMPP, WAMP, Live Server, etc.) ou qualquer servidor HTTP
+- Navegador moderno com suporte a ES6+
 
 ### Passos de Instalação
 
 1. **Copiar arquivos**
    ```
-   Extrair/copiar todos os arquivos para: C:\xampp\htdocs\cortefacilapp\
+   Extrair/copiar todos os arquivos para: C:\xampp\htdocs\cortefacil\cortefacilapp\
    ```
 
-2. **Iniciar XAMPP**
-   - Abrir o painel de controle do XAMPP
-   - Iniciar Apache e MySQL
+2. **Iniciar servidor web**
+   - Para XAMPP: Iniciar apenas o Apache (MySQL não é necessário)
+   - Para Live Server: Abrir a pasta no VS Code e usar Live Server
+   - Para Python: `python -m http.server 8000`
 
-3. **Criar banco de dados**
-   - Acessar: http://localhost/phpmyadmin
-   - Executar o script: `database/schema.sql`
-   - Ou criar manualmente o banco `cortefacil_db`
+3. **Acessar o sistema**
+   - URL: http://localhost/cortefacil/cortefacilapp/
+   - Ou conforme configuração do seu servidor
 
-4. **Configurar conexão** (se necessário)
-   - Editar: `config/database.php`
-   - Ajustar credenciais do MySQL
+### Não é necessário
+- ❌ Banco de dados (dados simulados via JavaScript)
+- ❌ PHP (convertido para JavaScript puro)
+- ❌ Configurações de backend
 
-5. **Acessar o sistema**
-   - URL: http://localhost/cortefacilapp
+## 👥 Como Usar o Sistema
 
-## 👥 Usuários de Teste
+### 🚀 Acesso Rápido
+- Use os **botões de login rápido** nas páginas de login
+- Ou cadastre-se normalmente (dados salvos no localStorage)
 
-### Administrador
-- **Email**: admin@cortefacil.com
-- **Senha**: admin123
+### 📱 Para Clientes
+1. Acesse `index.html` → "Entrar" → "Login Rápido Cliente"
+2. Ou cadastre-se como "Cliente" em `register.html`
+3. Faça agendamentos em `booking.html`
+4. Gerencie no dashboard `dashboard-client.html`
 
-### Parceiro (Dono de Salão)
-- **Email**: salao@teste.com
-- **Senha**: senha123
-
-### Cliente
-- **Email**: cliente@teste.com
-- **Senha**: senha123
+### 🏪 Para Parceiros (Salões)
+1. Acesse `index.html` → "Entrar" → "Login Rápido Parceiro"
+2. Ou cadastre-se como "Parceiro" em `register.html`
+3. Gerencie agendamentos em `dashboard-partner.html`
 
 ## 🎯 Funcionalidades Implementadas
 
@@ -119,56 +120,55 @@ Sistema completo de agendamentos desenvolvido em PHP + JavaScript com MySQL, fun
 
 ```
 cortefacilapp/
-├── api/                          # APIs do sistema
-│   ├── criar_agendamento.php
-│   ├── get_horarios.php
-│   ├── get_profissionais.php
-│   ├── processar_pagamento.php
-│   └── atualizar_status_agendamento.php
-├── assets/                       # Recursos estáticos
+├── index.html                    # 🏠 Página inicial moderna
+├── register.html                 # 📝 Cadastro de usuários
+├── login.html                    # 🔐 Login de usuários
+├── booking.html                  # 📅 Sistema de agendamento
+├── payment.html                  # 💳 Processamento de pagamentos
+├── dashboard-client.html         # 👤 Dashboard do cliente
+├── dashboard-partner.html        # 🏪 Dashboard do parceiro
+├── assets/                       # 📦 Recursos estáticos
 │   ├── css/
-│   │   └── style.css            # Estilos principais
+│   │   └── style.css            # 🎨 Estilos principais modernos
 │   └── js/
-│       └── main.js              # JavaScript principal
-├── cliente/                      # Módulo do cliente
-│   ├── agendar.php
-│   ├── dashboard.php
-│   ├── historico.php
-│   └── pagamento.php
-├── config/                       # Configurações
-│   └── database.php             # Conexão com banco
-├── database/                     # Scripts do banco
-│   └── schema.sql               # Estrutura e dados iniciais
-├── includes/                     # Arquivos incluídos
-│   └── auth.php                 # Sistema de autenticação
-├── parceiro/                     # Módulo do parceiro
-│   ├── cadastrar_salao.php
-│   └── dashboard.php
-├── index.php                     # Página inicial
-├── login.php                     # Página de login
-├── register.php                  # Página de cadastro
-├── logout.php                    # Script de logout
-└── README.md                     # Este arquivo
+│       └── main.js              # ⚡ JavaScript com funcionalidades avançadas
+├── api/                          # 📋 APIs antigas (mantidas para referência)
+├── cliente/                      # 📋 Módulos PHP antigos (mantidos)
+├── parceiro/                     # 📋 Módulos PHP antigos (mantidos)
+├── config/                       # 📋 Configurações antigas (mantidas)
+├── database/                     # 📋 Scripts antigos (mantidos)
+├── includes/                     # 📋 Includes antigos (mantidos)
+└── README.md                     # 📖 Documentação atualizada
 ```
+
+### 🎯 Arquivos Principais (HTML/CSS/JS)
+- **index.html**: Landing page com animações e design moderno
+- **register.html**: Cadastro com validação em tempo real
+- **login.html**: Login com opções rápidas para demonstração
+- **booking.html**: Agendamento em 4 etapas com dados simulados
+- **payment.html**: Pagamento com cartão e PIX simulados
+- **dashboard-client.html**: Dashboard completo do cliente
+- **dashboard-partner.html**: Dashboard avançado do parceiro
+- **style.css**: Estilos responsivos e modernos
+- **main.js**: JavaScript com funcionalidades completas
 
 ## 🔧 Tecnologias Utilizadas
 
-### Backend
-- **PHP 7.4+**: Linguagem principal
-- **MySQL**: Banco de dados
-- **PDO**: Conexão segura com banco
-
 ### Frontend
-- **HTML5**: Estrutura das páginas
-- **CSS3**: Estilos e responsividade
-- **JavaScript**: Interatividade e validações
-- **Bootstrap-like**: Sistema de grid responsivo
+- **HTML5**: Estrutura semântica e moderna
+- **CSS3**: Estilos responsivos com Flexbox e Grid
+- **JavaScript (ES6+)**: Funcionalidades interativas e dinâmicas
+- **Google Fonts**: Tipografia Inter
+- **Intersection Observer API**: Animações de scroll
+- **LocalStorage**: Persistência de dados do usuário
 
-### Segurança
-- **Prepared Statements**: Prevenção de SQL Injection
-- **Password Hashing**: Senhas criptografadas
-- **Session Management**: Controle de sessões
-- **Input Validation**: Validação de dados
+### Funcionalidades JavaScript
+- **Módulos ES6**: Organização do código
+- **Async/Await**: Operações assíncronas simuladas
+- **Event Delegation**: Performance otimizada
+- **Form Validation**: Validação em tempo real
+- **Máscaras de entrada**: Telefone e cartão
+- **Sistema de notificações**: Toast customizado
 
 ## 🎨 Características da Interface
 

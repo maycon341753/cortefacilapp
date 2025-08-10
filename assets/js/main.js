@@ -1,6 +1,6 @@
 /**
  * JavaScript principal para o Sistema SaaS de Agendamentos
- * Funcionalidades gerais e validações
+ * Funcionalidades gerais e validações - Versão HTML/CSS/JS
  */
 
 // Aguarda o carregamento completo da página
@@ -25,6 +25,12 @@ function initializeApp() {
     if (document.querySelector('.booking-system')) {
         initBookingSystem();
     }
+    
+    // Inicializa funcionalidades modernas
+    initMobileMenu();
+    initSmoothScrolling();
+    initAnimations();
+    initCounters();
 }
 
 /**
@@ -553,3 +559,251 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+/**
+ * Funcionalidades Modernas Adicionais
+ */
+
+/**
+ * Inicializa menu mobile
+ */
+function initMobileMenu() {
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+    
+    if (mobileToggle && navMenu) {
+        mobileToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+        });
+        
+        // Fechar menu ao clicar em um link
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+            });
+        });
+    }
+}
+
+/**
+ * Inicializa scroll suave
+ */
+function initSmoothScrolling() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+/**
+ * Inicializa animações de scroll
+ */
+function initAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+    
+    // Observar elementos com classe fade-in
+    document.querySelectorAll('.fade-in').forEach(el => {
+        observer.observe(el);
+    });
+    
+    // Observar cards de features
+    document.querySelectorAll('.feature-card').forEach(el => {
+        el.classList.add('fade-in');
+        observer.observe(el);
+    });
+    
+    // Observar cards de steps
+    document.querySelectorAll('.step-card').forEach(el => {
+        el.classList.add('fade-in');
+        observer.observe(el);
+    });
+    
+    // Observar CTA cards
+    document.querySelectorAll('.cta-card').forEach(el => {
+        el.classList.add('fade-in');
+        observer.observe(el);
+    });
+}
+
+/**
+ * Inicializa contadores animados
+ */
+function initCounters() {
+    const counters = document.querySelectorAll('.hero-stat-number');
+    
+    const animateCounter = (counter) => {
+        const target = parseInt(counter.getAttribute('data-target') || counter.textContent.replace(/\D/g, ''));
+        const duration = 2000; // 2 segundos
+        const step = target / (duration / 16); // 60fps
+        let current = 0;
+        
+        const updateCounter = () => {
+            current += step;
+            if (current < target) {
+                counter.textContent = Math.floor(current).toLocaleString('pt-BR');
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.textContent = target.toLocaleString('pt-BR');
+            }
+        };
+        
+        updateCounter();
+    };
+    
+    // Observer para iniciar animação quando visível
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                entry.target.classList.add('animated');
+                animateCounter(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    counters.forEach(counter => {
+        counterObserver.observe(counter);
+    });
+}
+
+/**
+ * Simulação de dados para demonstração
+ */
+function loadDemoData() {
+    // Simular dados de estatísticas
+    const stats = {
+        salons: 1250,
+        appointments: 15000,
+        clients: 8500
+    };
+    
+    // Atualizar estatísticas na página
+    const salonStat = document.querySelector('[data-stat="salons"]');
+    const appointmentStat = document.querySelector('[data-stat="appointments"]');
+    const clientStat = document.querySelector('[data-stat="clients"]');
+    
+    if (salonStat) salonStat.setAttribute('data-target', stats.salons);
+    if (appointmentStat) appointmentStat.setAttribute('data-target', stats.appointments);
+    if (clientStat) clientStat.setAttribute('data-target', stats.clients);
+}
+
+/**
+ * Funcionalidades de formulário aprimoradas
+ */
+function initEnhancedForms() {
+    // Máscara para telefone
+    const phoneInputs = document.querySelectorAll('input[type="tel"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3');
+                e.target.value = value;
+            }
+        });
+    });
+    
+    // Validação em tempo real aprimorada
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.classList.remove('error');
+            const errorMsg = this.parentNode.querySelector('.field-error');
+            if (errorMsg) errorMsg.remove();
+        });
+    });
+}
+
+/**
+ * Sistema de notificações
+ */
+class NotificationSystem {
+    constructor() {
+        this.container = this.createContainer();
+    }
+    
+    createContainer() {
+        let container = document.querySelector('.notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'notification-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                max-width: 400px;
+            `;
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+    
+    show(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.style.cssText = `
+            background: white;
+            border-left: 4px solid ${this.getColor(type)};
+            padding: 1rem;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        notification.textContent = message;
+        
+        this.container.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto-remover
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
+    
+    getColor(type) {
+        const colors = {
+            success: '#28a745',
+            error: '#dc3545',
+            warning: '#ffc107',
+            info: '#17a2b8'
+        };
+        return colors[type] || colors.info;
+    }
+}
+
+// Instanciar sistema de notificações
+const notifications = new NotificationSystem();
+
+/**
+ * Inicializar todas as funcionalidades quando a página carregar
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    loadDemoData();
+    initEnhancedForms();
+});
