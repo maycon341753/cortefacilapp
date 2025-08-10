@@ -1,6 +1,6 @@
-# CorteFácil - Sistema de Agendamentos (Versão HTML/CSS/JS)
+# CorteFácil - Sistema de Agendamento para Salões (PHP + MySQL)
 
-Sistema completo de agendamentos convertido para usar apenas **HTML**, **CSS** e **JavaScript**, eliminando dependências de PHP e MySQL. Versão moderna e responsiva com dados simulados.
+Sistema web completo para agendamento de serviços em salões de beleza, desenvolvido em PHP com MySQL, conectando clientes e profissionais de forma prática e eficiente.
 
 ## 📋 Características do Sistema
 

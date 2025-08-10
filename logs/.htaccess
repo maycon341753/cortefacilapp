@@ -1,0 +1,21 @@
+# Bloquear acesso direto a todos os arquivos de log
+Require all denied
+
+# Proteger arquivos de log
+<Files "*.log">
+    Require all denied
+</Files>
+
+# Proteger arquivos de texto
+<Files "*.txt">
+    Require all denied
+</Files>
+
+# Bloquear listagem de diretório
+Options -Indexes
+
+# Proteger contra acesso direto
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^.*$ - [F,L]
+</IfModule>

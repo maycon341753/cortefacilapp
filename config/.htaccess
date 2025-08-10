@@ -1,0 +1,16 @@
+# Bloquear acesso direto a todos os arquivos da pasta config
+Require all denied
+
+# Permitir apenas inclusão via PHP
+<Files "*.php">
+    Require all denied
+</Files>
+
+# Bloquear listagem de diretório
+Options -Indexes
+
+# Proteger contra acesso direto
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^.*$ - [F,L]
+</IfModule>
