@@ -1,148 +1,226 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+/**
+ * Sistema de Autenticação
+ * Gerencia sessões e controle de acesso
+ */
 
-// Verificar se usuário está logado
-function verificarLogin() {
-    if (!isset($_SESSION['usuario_id'])) {
-        header('Location: ../login.php');
-        exit();
-    }
+session_start();
+
+/**
+ * Verifica se o usuário está logado
+ * @return bool
+ */
+function isLoggedIn() {
+    return isset($_SESSION['usuario_id']) && !empty($_SESSION['usuario_id']);
 }
 
-// Verificar se é cliente
-function verificarCliente() {
-    verificarLogin();
-    if ($_SESSION['tipo_usuario'] !== 'cliente') {
-        header('Location: ../index.php');
-        exit();
-    }
+/**
+ * Verifica se o usuário tem o tipo específico
+ * @param string $tipo
+ * @return bool
+ */
+function hasUserType($tipo) {
+    return isLoggedIn() && $_SESSION['tipo_usuario'] === $tipo;
 }
 
-// Verificar se é parceiro
-function verificarParceiro() {
-    verificarLogin();
-    if ($_SESSION['tipo_usuario'] !== 'parceiro') {
-        header('Location: ../index.php');
-        exit();
-    }
+/**
+ * Verifica se é cliente
+ * @return bool
+ */
+function isCliente() {
+    return hasUserType('cliente');
 }
 
-// Verificar se é admin
-function verificarAdmin() {
-    verificarLogin();
-    if ($_SESSION['tipo_usuario'] !== 'admin') {
-        header('Location: ../index.php');
-        exit();
-    }
+/**
+ * Verifica se é parceiro
+ * @return bool
+ */
+function isParceiro() {
+    return hasUserType('parceiro');
 }
 
-// Fazer logout
+/**
+ * Verifica se é administrador
+ * @return bool
+ */
+function isAdmin() {
+    return hasUserType('admin');
+}
+
+/**
+ * Realiza login do usuário
+ * @param array $usuario
+ */
+function login($usuario) {
+    $_SESSION['usuario_id'] = $usuario['id'];
+    $_SESSION['usuario_nome'] = $usuario['nome'];
+    $_SESSION['usuario_email'] = $usuario['email'];
+    $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
+    $_SESSION['usuario_telefone'] = $usuario['telefone'];
+}
+
+/**
+ * Realiza logout do usuário
+ */
 function logout() {
+    session_unset();
     session_destroy();
-    header('Location: ../index.php');
-    exit();
 }
 
-// Gerar token CSRF
-function gerarTokenCSRF() {
+/**
+ * Redireciona usuário não autenticado
+ * @param string $redirect_to
+ */
+function requireLogin($redirect_to = '/login.php') {
+    if (!isLoggedIn()) {
+        header('Location: ' . $redirect_to);
+        exit();
+    }
+}
+
+/**
+ * Redireciona usuário sem permissão
+ * @param string $tipo_requerido
+ * @param string $redirect_to
+ */
+function requireUserType($tipo_requerido, $redirect_to = '/index.php') {
+    requireLogin();
+    
+    if (!hasUserType($tipo_requerido)) {
+        header('Location: ' . $redirect_to);
+        exit();
+    }
+}
+
+/**
+ * Redireciona cliente
+ * @param string $redirect_to
+ */
+function requireCliente($redirect_to = '/index.php') {
+    requireUserType('cliente', $redirect_to);
+}
+
+/**
+ * Redireciona parceiro
+ * @param string $redirect_to
+ */
+function requireParceiro($redirect_to = '/index.php') {
+    requireUserType('parceiro', $redirect_to);
+}
+
+/**
+ * Redireciona administrador
+ * @param string $redirect_to
+ */
+function requireAdmin($redirect_to = '/index.php') {
+    requireUserType('admin', $redirect_to);
+}
+
+/**
+ * Obtém dados do usuário logado
+ * @return array|null
+ */
+function getLoggedUser() {
+    if (!isLoggedIn()) {
+        return null;
+    }
+    
+    return [
+        'id' => $_SESSION['usuario_id'],
+        'nome' => $_SESSION['usuario_nome'],
+        'email' => $_SESSION['usuario_email'],
+        'tipo_usuario' => $_SESSION['tipo_usuario'],
+        'telefone' => $_SESSION['usuario_telefone']
+    ];
+}
+
+/**
+ * Gera token CSRF
+ * @return string
+ */
+function generateCSRFToken() {
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
     return $_SESSION['csrf_token'];
 }
 
-// Verificar token CSRF
-function verificarTokenCSRF($token) {
+/**
+ * Verifica token CSRF
+ * @param string $token
+ * @return bool
+ */
+function verifyCSRFToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// Sanitizar entrada
-function sanitizar($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
+/**
+ * Sanitiza entrada do usuário
+ * @param string $input
+ * @return string
+ */
+function sanitizeInput($input) {
+    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }
 
-// Sanitizar string (alias para sanitizar)
-function sanitizarString($data) {
-    return sanitizar($data);
+/**
+ * Valida email
+ * @param string $email
+ * @return bool
+ */
+function validateEmail($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-// Validar email
-function validarEmail($email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL);
-}
-
-// Validar telefone brasileiro
-function validarTelefone($telefone) {
+/**
+ * Valida telefone brasileiro
+ * @param string $telefone
+ * @return bool
+ */
+function validateTelefone($telefone) {
     $telefone = preg_replace('/[^0-9]/', '', $telefone);
     return strlen($telefone) >= 10 && strlen($telefone) <= 11;
 }
 
-// Gerar senha aleatória
-function gerarSenhaAleatoria($tamanho = 8) {
-    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $senha = '';
-    for ($i = 0; $i < $tamanho; $i++) {
-        $senha .= $caracteres[rand(0, strlen($caracteres) - 1)];
-    }
-    return $senha;
-}
-
-// Formatar telefone
-function formatarTelefone($telefone) {
+/**
+ * Formata telefone
+ * @param string $telefone
+ * @return string
+ */
+function formatTelefone($telefone) {
     $telefone = preg_replace('/[^0-9]/', '', $telefone);
+    
     if (strlen($telefone) == 11) {
         return '(' . substr($telefone, 0, 2) . ') ' . substr($telefone, 2, 5) . '-' . substr($telefone, 7);
     } elseif (strlen($telefone) == 10) {
         return '(' . substr($telefone, 0, 2) . ') ' . substr($telefone, 2, 4) . '-' . substr($telefone, 6);
     }
+    
     return $telefone;
 }
 
-// Formatar data brasileira
-function formatarDataBR($data) {
-    return date('d/m/Y', strtotime($data));
+/**
+ * Exibe mensagens de sucesso/erro
+ * @param string $type
+ * @param string $message
+ */
+function setFlashMessage($type, $message) {
+    $_SESSION['flash_message'] = [
+        'type' => $type,
+        'message' => $message
+    ];
 }
 
-// Formatar data e hora brasileira
-function formatarDataHoraBR($dataHora) {
-    return date('d/m/Y H:i', strtotime($dataHora));
-}
-
-// Verificar se data é válida
-function validarData($data) {
-    $d = DateTime::createFromFormat('Y-m-d', $data);
-    return $d && $d->format('Y-m-d') === $data;
-}
-
-// Verificar se hora é válida
-function validarHora($hora) {
-    $h = DateTime::createFromFormat('H:i', $hora);
-    return $h && $h->format('H:i') === $hora;
-}
-
-// Enviar resposta JSON
-function enviarJSON($data, $status = 200) {
-    http_response_code($status);
-    header('Content-Type: application/json');
-    echo json_encode($data);
-    exit();
-}
-
-// Registrar log de atividade
-function registrarLog($acao, $detalhes = '') {
-    $log = date('Y-m-d H:i:s') . " - ";
-    if (isset($_SESSION['usuario_id'])) {
-        $log .= "Usuário ID: " . $_SESSION['usuario_id'] . " - ";
+/**
+ * Obtém e remove mensagem flash
+ * @return array|null
+ */
+function getFlashMessage() {
+    if (isset($_SESSION['flash_message'])) {
+        $message = $_SESSION['flash_message'];
+        unset($_SESSION['flash_message']);
+        return $message;
     }
-    $log .= $acao;
-    if ($detalhes) {
-        $log .= " - " . $detalhes;
-    }
-    $log .= "\n";
-    
-    file_put_contents(__DIR__ . '/../logs/atividades.log', $log, FILE_APPEND | LOCK_EX);
+    return null;
 }
 ?>

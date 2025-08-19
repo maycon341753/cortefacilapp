@@ -1,16 +1,34 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/includes/auth.php';
+/**
+ * Página Principal do Sistema CorteFácil
+ * Ponto de entrada e redirecionamento baseado no tipo de usuário
+ */
 
-// Verificar se usuário já está logado
-if (isset($_SESSION['usuario_id'])) {
-    if ($_SESSION['tipo_usuario'] === 'cliente') {
-        header('Location: cliente/dashboard.php');
-        exit();
-    } elseif ($_SESSION['tipo_usuario'] === 'parceiro') {
-        header('Location: parceiro/dashboard.php');
-        exit();
+// Definir charset UTF-8
+header('Content-Type: text/html; charset=utf-8');
+
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+
+// Se usuário está logado, redireciona para o painel apropriado
+if (isLoggedIn()) {
+    $tipo_usuario = $_SESSION['tipo_usuario'];
+    
+    switch ($tipo_usuario) {
+        case 'cliente':
+            header('Location: cliente/dashboard.php');
+            break;
+        case 'parceiro':
+            header('Location: parceiro/dashboard.php');
+            break;
+        case 'admin':
+            header('Location: admin/dashboard.php');
+            break;
+        default:
+            logout();
+            break;
     }
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -18,274 +36,222 @@ if (isset($_SESSION['usuario_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CorteFácil - Sistema de Agendamentos para Salões de Beleza</title>
-    <meta name="description" content="Plataforma completa para agendamentos em salões de beleza. Conecte clientes e profissionais de forma simples e eficiente.">
-    <meta name="keywords" content="agendamento, salão, beleza, cabelo, manicure, pedicure">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <title>CorteFácil - Sistema de Agendamentos para Salões</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <div class="header-content">
-                <a href="index.php" class="logo">
-                    <span class="logo-icon">✂️</span>
-                    CorteFácil
-                </a>
-                
-                <nav class="nav-desktop">
-                    <ul class="nav-menu">
-                        <li><a href="#funcionalidades" class="nav-link">Funcionalidades</a></li>
-                        <li><a href="#como-funciona" class="nav-link">Como Funciona</a></li>
-                        <li><a href="login.php" class="nav-link btn-outline-header">Entrar</a></li>
-                        <li><a href="register.php" class="nav-link btn-primary-header">Cadastrar</a></li>
-                    </ul>
-                </nav>
-
-                <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+            <a class="navbar-brand" href="index.php">
+                <i class="fas fa-cut me-2"></i>
+                CorteFácil
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#como-funciona">Como Funciona</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#vantagens">Vantagens</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="login.php">Entrar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-light ms-2 px-3" href="cadastro.php">Cadastrar</a>
+                    </li>
+                </ul>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-background"></div>
-            <div class="container">
-                <div class="hero-content">
-                    <h1 class="hero-title">
-                        Conecte seu salão com <span class="highlight">milhares de clientes</span>
+    <!-- Hero Section -->
+    <section class="hero-section bg-gradient text-white py-5">
+        <div class="container">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Agende seu corte com facilidade
                     </h1>
-                    <p class="hero-subtitle">
-                        A plataforma mais completa para agendamentos em salões de beleza. 
-                        Gerencie horários, receba pagamentos e faça seu negócio crescer.
+                    <p class="lead mb-4">
+                        Conectamos clientes e salões de beleza de forma simples e eficiente. 
+                        Agende seus serviços favoritos com apenas alguns cliques!
                     </p>
-                    
-                    <div class="hero-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">500+</span>
-                            <span class="stat-label">Salões Parceiros</span>
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        <a href="cadastro.php?tipo=cliente" class="btn btn-light btn-lg px-4">
+                            <i class="fas fa-user me-2"></i>
+                            Sou Cliente
+                        </a>
+                        <a href="cadastro.php?tipo=parceiro" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-store me-2"></i>
+                            Tenho um Salão
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <div class="hero-image">
+                        <i class="fas fa-calendar-alt" style="font-size: 15rem; opacity: 0.1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Como Funciona -->
+    <section id="como-funciona" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="display-5 fw-bold">Como Funciona</h2>
+                    <p class="lead text-muted">Simples, rápido e eficiente</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-search fa-3x text-primary"></i>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">10k+</span>
-                            <span class="stat-label">Agendamentos</span>
+                        <h4>1. Escolha o Salão</h4>
+                        <p class="text-muted">
+                            Navegue pelos salões parceiros e escolha o que mais combina com você.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-calendar-check fa-3x text-primary"></i>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">98%</span>
-                            <span class="stat-label">Satisfação</span>
+                        <h4>2. Agende o Horário</h4>
+                        <p class="text-muted">
+                            Selecione o profissional, data e horário que melhor se adequa à sua agenda.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-credit-card fa-3x text-primary"></i>
+                        </div>
+                        <h4>3. Confirme o Agendamento</h4>
+                        <p class="text-muted">
+                            Pague apenas R$ 1,29 para confirmar e compareça no horário marcado.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vantagens -->
+    <section id="vantagens" class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="display-5 fw-bold">Vantagens</h2>
+                    <p class="lead text-muted">Por que escolher o CorteFácil?</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Economia de Tempo</h5>
+                            <p class="text-muted">
+                                Sem filas, sem espera. Agende online e chegue na hora certa.
+                            </p>
                         </div>
                     </div>
-
-                    <div class="hero-cta">
-                        <div class="cta-cards">
-                            <div class="cta-card">
-                                <div class="cta-icon">👤</div>
-                                <h3>Sou Cliente</h3>
-                                <p>Encontre e agende com os melhores profissionais da sua região</p>
-                                <a href="register.php?tipo=cliente" class="btn btn-primary">Começar Agora</a>
-                            </div>
-                            <div class="cta-card">
-                                <div class="cta-icon">💼</div>
-                                <h3>Tenho um Salão</h3>
-                                <p>Cadastre seu salão e comece a receber novos clientes hoje mesmo</p>
-                                <a href="register.php?tipo=parceiro" class="btn btn-secondary">Cadastrar Salão</a>
-                            </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Segurança</h5>
+                            <p class="text-muted">
+                                Seus dados estão protegidos e suas informações são confidenciais.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Facilidade</h5>
+                            <p class="text-muted">
+                                Interface simples e intuitiva, funciona em qualquer dispositivo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-dollar-sign fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Preço Justo</h5>
+                            <p class="text-muted">
+                                Apenas R$ 1,29 por agendamento. Sem mensalidades ou taxas ocultas.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Funcionalidades Section -->
-        <section id="funcionalidades" class="features">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Funcionalidades Completas</h2>
-                    <p class="section-subtitle">Tudo que você precisa para gerenciar seu salão ou encontrar o serviço perfeito</p>
-                </div>
-
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">📅</div>
-                        <h3>Agendamento Online</h3>
-                        <p>Sistema intuitivo de agendamentos com calendário em tempo real e confirmação automática.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💳</div>
-                        <h3>Pagamentos Seguros</h3>
-                        <p>Processamento seguro de pagamentos com taxa baixa de apenas R$ 1,29 por agendamento.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3>App Mobile</h3>
-                        <p>Interface responsiva que funciona perfeitamente em qualquer dispositivo móvel.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3>Relatórios Detalhados</h3>
-                        <p>Acompanhe o desempenho do seu salão com relatórios completos e insights valiosos.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔔</div>
-                        <h3>Notificações</h3>
-                        <p>Lembretes automáticos por email e SMS para clientes e profissionais.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">⭐</div>
-                        <h3>Avaliações</h3>
-                        <p>Sistema de avaliações que ajuda a construir a reputação do seu salão.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Como Funciona Section -->
-        <section id="como-funciona" class="how-it-works">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Como Funciona</h2>
-                    <p class="section-subtitle">Processo simples em 3 passos</p>
-                </div>
-
-                <div class="steps-container">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h3>Cadastre-se</h3>
-                            <p>Crie sua conta como cliente ou parceiro em menos de 2 minutos</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h3>Escolha o Serviço</h3>
-                            <p>Encontre o salão perfeito e selecione o profissional ideal</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h3>Agende e Pague</h3>
-                            <p>Confirme seu horário e efetue o pagamento de forma segura</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Testimonials Section -->
-        <section class="testimonials">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">O que nossos usuários dizem</h2>
-                </div>
-
-                <div class="testimonials-grid">
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <p>"O CorteFácil revolucionou meu salão! Agora tenho muito mais clientes e organização."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <strong>Maria Silva</strong>
-                            <span>Proprietária - Salão Beleza Total</span>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <p>"Nunca foi tão fácil agendar um horário. Interface simples e pagamento seguro."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <strong>João Santos</strong>
-                            <span>Cliente</span>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <p>"Aumentei minha receita em 40% desde que comecei a usar a plataforma."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <strong>Ana Costa</strong>
-                            <span>Cabeleireira</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <div class="container">
-                <div class="cta-content">
-                    <h2>Pronto para começar?</h2>
-                    <p>Junte-se a milhares de profissionais e clientes que já usam o CorteFácil</p>
-                    <div class="cta-buttons">
-                        <a href="register.php?tipo=cliente" class="btn btn-primary btn-large">Sou Cliente</a>
-                        <a href="register.php?tipo=parceiro" class="btn btn-secondary btn-large">Cadastrar Salão</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Pronto para começar?</h2>
+            <p class="lead mb-4">
+                Junte-se a milhares de clientes satisfeitos e salões parceiros.
+            </p>
+            <a href="cadastro.php" class="btn btn-light btn-lg px-5">
+                Cadastre-se Agora
+            </a>
+        </div>
+    </section>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="bg-dark text-white py-4">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <div class="footer-logo">
-                        <span class="logo-icon">✂️</span>
-                        <span>CorteFácil</span>
-                    </div>
-                    <p>A plataforma que conecta clientes e profissionais de beleza de forma simples e eficiente.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook">📘</a>
-                        <a href="#" aria-label="Instagram">📷</a>
-                        <a href="#" aria-label="Twitter">🐦</a>
-                    </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>
+                        <i class="fas fa-cut me-2"></i>
+                        CorteFácil
+                    </h5>
+                    <p class="text-muted">
+                        Conectando clientes e salões de beleza com tecnologia e praticidade.
+                    </p>
                 </div>
-                
-                <div class="footer-section">
-                    <h3>Para Parceiros</h3>
-                    <ul>
-                        <li><a href="register.php?tipo=parceiro">Cadastrar Salão</a></li>
-                        <li><a href="parceiro/dashboard.php">Painel do Parceiro</a></li>
-                    </ul>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">
+                        &copy; 2024 CorteFácil. Todos os direitos reservados.
+                    </p>
                 </div>
-                
-                <div class="footer-section">
-                    <h3>Para Clientes</h3>
-                    <ul>
-                        <li><a href="register.php?tipo=cliente">Criar Conta</a></li>
-                        <li><a href="cliente/dashboard.php">Meus Agendamentos</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Suporte</h3>
-                    <ul>
-                        <li><a href="#funcionalidades">Funcionalidades</a></li>
-                        <li><a href="#como-funciona">Como Funciona</a></li>
-                        <li><a href="login.php">Entrar</a></li>
-                        <li><a href="register.php">Cadastrar</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 CorteFácil. Todos os direitos reservados.</p>
             </div>
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
 </body>
 </html>

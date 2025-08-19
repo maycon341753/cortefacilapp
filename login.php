@@ -1,68 +1,67 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/config/Database.php';
-require_once __DIR__ . '/models/Usuario.php';
+/**
+ * Página de Login
+ * Autenticação de usuários do sistema
+ */
+
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/models/usuario.php';
+
+// Se já está logado, redireciona
+if (isLoggedIn()) {
+    header('Location: index.php');
+    exit();
+}
 
 $erro = '';
 $sucesso = '';
 
-// Verificar se usuário já está logado
-if (isset($_SESSION['usuario_id'])) {
-    if ($_SESSION['tipo_usuario'] === 'cliente') {
-        header('Location: cliente/dashboard.php');
-        exit();
-    } elseif ($_SESSION['tipo_usuario'] === 'parceiro') {
-        header('Location: parceiro/dashboard.php');
-        exit();
-    }
-}
-
 // Processar login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitizar($_POST['email']);
-    $senha = $_POST['senha'];
+    $email = sanitizeInput($_POST['email'] ?? '');
+    $senha = $_POST['senha'] ?? '';
     
     if (empty($email) || empty($senha)) {
         $erro = 'Por favor, preencha todos os campos.';
-    } elseif (!validarEmail($email)) {
-        $erro = 'Email inválido.';
+    } elseif (!validateEmail($email)) {
+        $erro = 'Digite um email válido.';
     } else {
-        // Conectar ao banco
-        $database = new Database();
-        $db = $database->getConnection();
+        $usuario = new Usuario();
+        $dadosUsuario = $usuario->login($email, $senha);
         
-        // Criar objeto usuário
-        $usuario = new Usuario($db);
-        $usuario->email = $email;
-        $usuario->senha = $senha;
-        
-        // Tentar fazer login
-        if ($usuario->login()) {
-            // Definir sessões
-            $_SESSION['usuario_id'] = $usuario->id;
-            $_SESSION['usuario_nome'] = $usuario->nome;
-            $_SESSION['usuario_email'] = $usuario->email;
-            $_SESSION['tipo_usuario'] = $usuario->tipo_usuario;
-            $_SESSION['usuario_telefone'] = $usuario->telefone;
-            
-            registrarLog("Login realizado", "Email: $email");
+        if ($dadosUsuario) {
+            login($dadosUsuario);
             
             // Redirecionar baseado no tipo de usuário
-            if ($usuario->tipo_usuario === 'cliente') {
-                header('Location: cliente/dashboard.php');
-                exit();
-            } elseif ($usuario->tipo_usuario === 'parceiro') {
-                header('Location: parceiro/dashboard.php');
-                exit();
-            } elseif ($usuario->tipo_usuario === 'admin') {
-                header('Location: admin/dashboard.php');
-                exit();
+            switch ($dadosUsuario['tipo_usuario']) {
+                case 'cliente':
+                    header('Location: cliente/dashboard.php');
+                    break;
+                case 'parceiro':
+                    header('Location: parceiro/dashboard.php');
+                    break;
+                case 'admin':
+                    header('Location: admin/dashboard.php');
+                    break;
+                default:
+                    header('Location: index.php');
+                    break;
             }
+            exit();
         } else {
             $erro = 'Email ou senha incorretos.';
-            registrarLog("Tentativa de login falhada", "Email: $email");
         }
+    }
+}
+
+// Verificar mensagem flash
+$flash = getFlashMessage();
+if ($flash) {
+    if ($flash['type'] === 'success') {
+        $sucesso = $flash['message'];
+    } else {
+        $erro = $flash['message'];
     }
 }
 ?>
@@ -72,95 +71,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CorteFácil</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
 </head>
-<body class="auth-page">
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <a href="index.php" class="auth-logo">
-                    <span class="logo-icon">✂️</span>
-                    CorteFácil
-                </a>
-                <h1>Entrar na sua conta</h1>
-                <p>Bem-vindo de volta! Faça login para continuar.</p>
-            </div>
-
-            <?php if ($erro): ?>
-                <div class="alert alert-error">
-                    <?php echo $erro; ?>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header text-center">
+                        <h3 class="mb-0">
+                            <i class="fas fa-cut me-2"></i>
+                            CorteFácil
+                        </h3>
+                        <p class="text-white-50 mb-0">Faça login em sua conta</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <?php if ($erro): ?>
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <?php echo htmlspecialchars($erro); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($sucesso): ?>
+                            <div class="alert alert-success" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <?php echo htmlspecialchars($sucesso); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <form method="POST" action="login.php">
+                            <div class="form-group mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    Email
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="<?php echo htmlspecialchars($email ?? ''); ?>" 
+                                       placeholder="Digite seu email" required>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="senha" class="form-label">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Senha
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="senha" name="senha" 
+                                           placeholder="Digite sua senha" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleSenha">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    Entrar
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-center">
+                            <p class="mb-2">Ainda não tem uma conta?</p>
+                            <a href="cadastro.php" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Criar Conta
+                            </a>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="index.php" class="text-muted text-decoration-none">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Voltar ao início
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <?php if ($sucesso): ?>
-                <div class="alert alert-success">
-                    <?php echo $sucesso; ?>
+                
+                <!-- Contas de teste -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Contas de Teste
+                        </h6>
+                        <small class="text-muted">
+                            <strong>Admin:</strong> admin@cortefacil.com / password<br>
+                            <strong>Cliente:</strong> cliente@teste.com / 123456<br>
+                            <strong>Parceiro:</strong> parceiro@teste.com / 123456
+                        </small>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <form method="POST" class="auth-form">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        required 
-                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
-                        placeholder="seu@email.com"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input 
-                        type="password" 
-                        id="senha" 
-                        name="senha" 
-                        required 
-                        placeholder="Sua senha"
-                    >
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-full">
-                    Entrar
-                </button>
-            </form>
-
-            <div class="auth-divider">
-                <span>ou</span>
-            </div>
-
-            <div class="quick-login">
-                <h3>Login Rápido para Demonstração</h3>
-                <div class="quick-login-buttons">
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="email" value="maria@email.com">
-                        <input type="hidden" name="senha" value="123456">
-                        <button type="submit" class="btn btn-outline btn-small">
-                            👤 Entrar como Cliente
-                        </button>
-                    </form>
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="email" value="joao@email.com">
-                        <input type="hidden" name="senha" value="123456">
-                        <button type="submit" class="btn btn-outline btn-small">
-                            💼 Entrar como Parceiro
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="auth-footer">
-                <p>Não tem uma conta? <a href="register.php">Cadastre-se aqui</a></p>
-                <p><a href="index.php">← Voltar ao início</a></p>
             </div>
         </div>
     </div>
-
-    <script src="assets/js/main.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle mostrar/ocultar senha
+        document.getElementById('toggleSenha').addEventListener('click', function() {
+            const senhaInput = document.getElementById('senha');
+            const icon = this.querySelector('i');
+            
+            if (senhaInput.type === 'password') {
+                senhaInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                senhaInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+        
+        // Focar no primeiro campo
+        document.getElementById('email').focus();
+    </script>
 </body>
 </html>
