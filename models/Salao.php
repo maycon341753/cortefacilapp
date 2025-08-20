@@ -90,16 +90,16 @@ class Salao {
      */
     public function buscarPorDono($id_dono) {
         try {
-            $sql = "SELECT * FROM {$this->table} WHERE id_dono = :id_dono ORDER BY nome";
+            $sql = "SELECT * FROM {$this->table} WHERE id_dono = :id_dono LIMIT 1";
             
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id_dono', $id_dono);
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            return $stmt->fetch();
         } catch(PDOException $e) {
-            error_log("Erro ao buscar salões do parceiro: " . $e->getMessage());
-            return [];
+            error_log("Erro ao buscar salão do parceiro: " . $e->getMessage());
+            return false;
         }
     }
     
@@ -337,7 +337,7 @@ class Salao {
      * Lista todos os salões (para admin)
      * @return array
      */
-    public function listarTodos() {
+    public function listarTodosAdmin() {
         try {
             $sql = "SELECT s.*, u.nome as nome_dono 
                     FROM {$this->table} s 

@@ -4,7 +4,33 @@
  * Gerencia sessões e controle de acesso
  */
 
-session_start();
+// Configurações de sessão para compatibilidade local/online
+if (session_status() == PHP_SESSION_NONE) {
+    // Configurar parâmetros de sessão antes de iniciar
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_lifetime', 0);
+    
+    // Configurações específicas para ambiente online
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+        ini_set('session.cookie_secure', 1);
+    }
+    
+    // Configurar SameSite para compatibilidade
+    if (PHP_VERSION_ID >= 70300) {
+        ini_set('session.cookie_samesite', 'Lax');
+    }
+    
+    session_start();
+    
+    // Regenerar ID da sessão periodicamente para segurança
+    if (!isset($_SESSION['last_regeneration'])) {
+        $_SESSION['last_regeneration'] = time();
+    } elseif (time() - $_SESSION['last_regeneration'] > 300) { // 5 minutos
+        session_regenerate_id(true);
+        $_SESSION['last_regeneration'] = time();
+    }
+}
 
 /**
  * Verifica se o usuário está logado
@@ -139,10 +165,31 @@ function getLoggedUser() {
  * @return string
  */
 function generateCSRFToken() {
-    if (!isset($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
     }
-    return $_SESSION['csrf_token'];
+    
+    $tokenKey = 'csrf_token_final_fix';
+    
+    // Se já existe um token válido, SEMPRE retornar o mesmo
+    if (isset($_SESSION[$tokenKey]) && !empty($_SESSION[$tokenKey])) {
+        return $_SESSION[$tokenKey];
+    }
+    
+    // Gerar novo token apenas se não existir
+    if (function_exists('random_bytes')) {
+        $token = bin2hex(random_bytes(32));
+    } elseif (function_exists('openssl_random_pseudo_bytes')) {
+        $token = bin2hex(openssl_random_pseudo_bytes(32));
+    } else {
+        $token = md5(uniqid(mt_rand(), true));
+    }
+    
+    // Armazenar na sessão com timestamp
+    $_SESSION[$tokenKey] = $token;
+    $_SESSION[$tokenKey . '_time'] = time();
+    
+    return $token;
 }
 
 /**
@@ -151,7 +198,55 @@ function generateCSRFToken() {
  * @return bool
  */
 function verifyCSRFToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    $tokenKey = 'csrf_token_final_fix';
+    
+    // Normalizar tokens (remover espaços e quebras de linha)
+    $receivedToken = trim($token);
+    $sessionToken = isset($_SESSION[$tokenKey]) ? trim($_SESSION[$tokenKey]) : '';
+    
+    // Verificar se tokens existem
+    if (empty($receivedToken) || empty($sessionToken)) {
+        return false;
+    }
+    
+    // Verificar expiração (3 horas)
+    $tokenTime = isset($_SESSION[$tokenKey . '_time']) ? $_SESSION[$tokenKey . '_time'] : 0;
+    $age = time() - $tokenTime;
+    
+    if ($age > 10800) { // 3 horas
+        return false;
+    }
+    
+    // Validação final com comparação segura
+    return function_exists('hash_equals') ? 
+           hash_equals($sessionToken, $receivedToken) : 
+           ($receivedToken === $sessionToken);
+}
+
+/**
+ * Alias para generateCSRFToken (compatibilidade)
+ * @return string
+ */
+if (!function_exists('generateCsrfToken')) {
+    function generateCsrfToken() {
+        $token = generateCSRFToken();
+        return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token) . '">';
+    }
+}
+
+/**
+ * Alias para verifyCSRFToken (compatibilidade)
+ * @param string $token
+ * @return bool
+ */
+if (!function_exists('verifyCsrfToken')) {
+    function verifyCsrfToken($token) {
+        return verifyCSRFToken($token);
+    }
 }
 
 /**

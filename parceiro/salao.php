@@ -31,8 +31,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validar dados
         $nome = trim($_POST['nome'] ?? '');
-        $endereco = trim($_POST['endereco'] ?? '');
+        $rua = trim($_POST['rua'] ?? '');
+        $numero = trim($_POST['numero'] ?? '');
+        $bairro = trim($_POST['bairro'] ?? '');
+        $cidade = trim($_POST['cidade'] ?? '');
+        $estado = trim($_POST['estado'] ?? '');
+        $cep = trim($_POST['cep'] ?? '');
+        $complemento = trim($_POST['complemento'] ?? '');
         $telefone = trim($_POST['telefone'] ?? '');
+        $descricao = trim($_POST['descricao'] ?? '');
+        
+        // Montar endereço completo
+        $endereco_partes = [];
+        if (!empty($rua)) $endereco_partes[] = $rua;
+        if (!empty($numero)) $endereco_partes[] = $numero;
+        if (!empty($complemento)) $endereco_partes[] = $complemento;
+        if (!empty($bairro)) $endereco_partes[] = $bairro;
+        if (!empty($cidade)) $endereco_partes[] = $cidade;
+        if (!empty($estado)) $endereco_partes[] = $estado;
+        if (!empty($cep)) $endereco_partes[] = $cep;
+        
+        $endereco = implode(', ', $endereco_partes);
         
         if (empty($nome)) {
             throw new Exception('Nome do salão é obrigatório.');
@@ -42,8 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Nome do salão deve ter pelo menos 3 caracteres.');
         }
         
-        if (empty($endereco)) {
-            throw new Exception('Endereço é obrigatório.');
+        if (empty($rua) || empty($numero) || empty($bairro) || empty($cidade) || empty($estado) || empty($cep)) {
+            throw new Exception('Todos os campos de endereço são obrigatórios (exceto complemento).');
+        }
+        
+        // Validar CEP
+        $cep_limpo = preg_replace('/[^0-9]/', '', $cep);
+        if (strlen($cep_limpo) !== 8) {
+            throw new Exception('CEP deve ter 8 dígitos.');
         }
         
         if (empty($telefone)) {
@@ -54,7 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dados = [
             'nome' => $nome,
             'endereco' => $endereco,
-            'telefone' => formatarTelefone($telefone)
+            'telefone' => formatarTelefone($telefone),
+            'descricao' => $descricao
         ];
         
         if ($editando) {
@@ -92,9 +118,55 @@ if ($editando && empty($_POST)) {
     $nome = $meu_salao['nome'];
     $endereco = $meu_salao['endereco'];
     $telefone = $meu_salao['telefone'];
+    
+    // Tentar extrair campos do endereço existente
+    $endereco_partes = explode(', ', $endereco);
+    $rua = $endereco_partes[0] ?? '';
+    $numero = $endereco_partes[1] ?? '';
+    $complemento = '';
+    $bairro = '';
+    $cidade = '';
+    $estado = '';
+    $cep = '';
+    
+    // Se há mais partes, tentar identificar
+    if (count($endereco_partes) > 2) {
+        // Última parte pode ser CEP
+        $ultima_parte = end($endereco_partes);
+        if (preg_match('/\d{5}-?\d{3}/', $ultima_parte)) {
+            $cep = $ultima_parte;
+            array_pop($endereco_partes);
+        }
+        
+        // Penúltima pode ser estado
+        if (count($endereco_partes) > 2) {
+            $estado = array_pop($endereco_partes);
+        }
+        
+        // Antepenúltima pode ser cidade
+        if (count($endereco_partes) > 2) {
+            $cidade = array_pop($endereco_partes);
+        }
+        
+        // O que sobrar pode ser bairro
+        if (count($endereco_partes) > 2) {
+            $bairro = array_pop($endereco_partes);
+        }
+        
+        // Se ainda há partes, pode ser complemento
+        if (count($endereco_partes) > 2) {
+            $complemento = $endereco_partes[2];
+        }
+    }
 } else {
     $nome = $_POST['nome'] ?? '';
-    $endereco = $_POST['endereco'] ?? '';
+    $rua = $_POST['rua'] ?? '';
+    $numero = $_POST['numero'] ?? '';
+    $bairro = $_POST['bairro'] ?? '';
+    $cidade = $_POST['cidade'] ?? '';
+    $estado = $_POST['estado'] ?? '';
+    $cep = $_POST['cep'] ?? '';
+    $complemento = $_POST['complemento'] ?? '';
     $telefone = $_POST['telefone'] ?? '';
 }
 ?>
@@ -234,12 +306,90 @@ if ($editando && empty($_POST)) {
                                         <div class="form-text">Mínimo de 3 caracteres</div>
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label for="endereco" class="form-label">Endereço Completo *</label>
-                                        <textarea class="form-control" id="endereco" name="endereco" rows="3" 
-                                                  placeholder="Rua, número, bairro, cidade - CEP" 
-                                                  maxlength="255" required><?php echo htmlspecialchars($endereco); ?></textarea>
-                                        <div class="form-text">Inclua rua, número, bairro, cidade e CEP</div>
+                                    <!-- Endereço Separado -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-8">
+                                            <label for="rua" class="form-label">Rua/Avenida *</label>
+                                            <input type="text" class="form-control" id="rua" name="rua" 
+                                                   value="<?php echo htmlspecialchars($rua ?? ''); ?>" 
+                                                   placeholder="Ex: Rua das Flores" 
+                                                   maxlength="150" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="numero" class="form-label">Número *</label>
+                                            <input type="text" class="form-control" id="numero" name="numero" 
+                                                   value="<?php echo htmlspecialchars($numero ?? ''); ?>" 
+                                                   placeholder="123" 
+                                                   maxlength="10" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="bairro" class="form-label">Bairro *</label>
+                                            <input type="text" class="form-control" id="bairro" name="bairro" 
+                                                   value="<?php echo htmlspecialchars($bairro ?? ''); ?>" 
+                                                   placeholder="Ex: Centro" 
+                                                   maxlength="100" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="cidade" class="form-label">Cidade *</label>
+                                            <input type="text" class="form-control" id="cidade" name="cidade" 
+                                                   value="<?php echo htmlspecialchars($cidade ?? ''); ?>" 
+                                                   placeholder="Ex: São Paulo" 
+                                                   maxlength="100" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="cep" class="form-label">CEP *</label>
+                                            <input type="text" class="form-control" id="cep" name="cep" 
+                                                   value="<?php echo htmlspecialchars($cep ?? ''); ?>" 
+                                                   placeholder="00000-000" 
+                                                   data-mask="00000-000" 
+                                                   maxlength="9" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="estado" class="form-label">Estado *</label>
+                                            <select class="form-select" id="estado" name="estado" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="AC" <?php echo ($estado ?? '') === 'AC' ? 'selected' : ''; ?>>Acre</option>
+                                                <option value="AL" <?php echo ($estado ?? '') === 'AL' ? 'selected' : ''; ?>>Alagoas</option>
+                                                <option value="AP" <?php echo ($estado ?? '') === 'AP' ? 'selected' : ''; ?>>Amapá</option>
+                                                <option value="AM" <?php echo ($estado ?? '') === 'AM' ? 'selected' : ''; ?>>Amazonas</option>
+                                                <option value="BA" <?php echo ($estado ?? '') === 'BA' ? 'selected' : ''; ?>>Bahia</option>
+                                                <option value="CE" <?php echo ($estado ?? '') === 'CE' ? 'selected' : ''; ?>>Ceará</option>
+                                                <option value="DF" <?php echo ($estado ?? '') === 'DF' ? 'selected' : ''; ?>>Distrito Federal</option>
+                                                <option value="ES" <?php echo ($estado ?? '') === 'ES' ? 'selected' : ''; ?>>Espírito Santo</option>
+                                                <option value="GO" <?php echo ($estado ?? '') === 'GO' ? 'selected' : ''; ?>>Goiás</option>
+                                                <option value="MA" <?php echo ($estado ?? '') === 'MA' ? 'selected' : ''; ?>>Maranhão</option>
+                                                <option value="MT" <?php echo ($estado ?? '') === 'MT' ? 'selected' : ''; ?>>Mato Grosso</option>
+                                                <option value="MS" <?php echo ($estado ?? '') === 'MS' ? 'selected' : ''; ?>>Mato Grosso do Sul</option>
+                                                <option value="MG" <?php echo ($estado ?? '') === 'MG' ? 'selected' : ''; ?>>Minas Gerais</option>
+                                                <option value="PA" <?php echo ($estado ?? '') === 'PA' ? 'selected' : ''; ?>>Pará</option>
+                                                <option value="PB" <?php echo ($estado ?? '') === 'PB' ? 'selected' : ''; ?>>Paraíba</option>
+                                                <option value="PR" <?php echo ($estado ?? '') === 'PR' ? 'selected' : ''; ?>>Paraná</option>
+                                                <option value="PE" <?php echo ($estado ?? '') === 'PE' ? 'selected' : ''; ?>>Pernambuco</option>
+                                                <option value="PI" <?php echo ($estado ?? '') === 'PI' ? 'selected' : ''; ?>>Piauí</option>
+                                                <option value="RJ" <?php echo ($estado ?? '') === 'RJ' ? 'selected' : ''; ?>>Rio de Janeiro</option>
+                                                <option value="RN" <?php echo ($estado ?? '') === 'RN' ? 'selected' : ''; ?>>Rio Grande do Norte</option>
+                                                <option value="RS" <?php echo ($estado ?? '') === 'RS' ? 'selected' : ''; ?>>Rio Grande do Sul</option>
+                                                <option value="RO" <?php echo ($estado ?? '') === 'RO' ? 'selected' : ''; ?>>Rondônia</option>
+                                                <option value="RR" <?php echo ($estado ?? '') === 'RR' ? 'selected' : ''; ?>>Roraima</option>
+                                                <option value="SC" <?php echo ($estado ?? '') === 'SC' ? 'selected' : ''; ?>>Santa Catarina</option>
+                                                <option value="SP" <?php echo ($estado ?? '') === 'SP' ? 'selected' : ''; ?>>São Paulo</option>
+                                                <option value="SE" <?php echo ($estado ?? '') === 'SE' ? 'selected' : ''; ?>>Sergipe</option>
+                                                <option value="TO" <?php echo ($estado ?? '') === 'TO' ? 'selected' : ''; ?>>Tocantins</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="complemento" class="form-label">Complemento</label>
+                                            <input type="text" class="form-control" id="complemento" name="complemento" 
+                                                   value="<?php echo htmlspecialchars($complemento ?? ''); ?>" 
+                                                   placeholder="Apto, Sala, etc." 
+                                                   maxlength="50">
+                                        </div>
                                     </div>
                                     
                                     <div class="mb-4">
@@ -249,6 +399,13 @@ if ($editando && empty($_POST)) {
                                                placeholder="(11) 99999-9999" 
                                                data-mask="(00) 00000-0000" required>
                                         <div class="form-text">Telefone para contato dos clientes</div>
+                                    </div>
+                                    
+                                    <!-- Campo de descrição do salão -->
+                                    <div class="mb-3">
+                                        <label for="descricao" class="form-label">Descrição do Salão</label>
+                                        <textarea class="form-control" id="descricao" name="descricao" rows="3" placeholder="Descreva seu salão, serviços oferecidos, horário de funcionamento, etc."><?php echo htmlspecialchars($meu_salao['descricao'] ?? ''); ?></textarea>
+                                        <div class="form-text">Uma boa descrição ajuda seus clientes a conhecerem melhor seu salão.</div>
                                     </div>
                                     
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -300,12 +457,63 @@ if ($editando && empty($_POST)) {
                                     
                                     <div class="mb-2">
                                         <div class="d-flex justify-content-between">
+                                            <span class="text-muted">Última atualização:</span>
+                                            <span class="fw-bold"><?php echo formatarData($meu_salao['updated_at'] ?? date('Y-m-d')); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between">
                                             <span class="text-muted">ID do Salão:</span>
                                             <span class="fw-bold">#<?php echo str_pad($meu_salao['id'], 6, '0', STR_PAD_LEFT); ?></span>
                                         </div>
                                     </div>
+                                    
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted">Status:</span>
+                                            <span class="fw-bold <?php echo $meu_salao['ativo'] ? 'text-success' : 'text-danger'; ?>">
+                                                <?php echo $meu_salao['ativo'] ? 'Ativo' : 'Inativo'; ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        <?php endif; ?>
+                        
+                        <!-- Informações Detalhadas do Salão -->
+                        <?php if ($editando): ?>
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informações Detalhadas do Salão
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">Nome do Salão</h6>
+                                    <p class="mb-0"><?php echo htmlspecialchars($meu_salao['nome'] ?? ''); ?></p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">Endereço Completo</h6>
+                                    <p class="mb-0"><?php echo htmlspecialchars($meu_salao['endereco'] ?? ''); ?></p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">Telefone</h6>
+                                    <p class="mb-0"><?php echo htmlspecialchars($meu_salao['telefone'] ?? ''); ?></p>
+                                </div>
+                                
+                                <?php if (!empty($meu_salao['descricao'])): ?>
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">Descrição</h6>
+                                    <p class="mb-0"><?php echo nl2br(htmlspecialchars($meu_salao['descricao'])); ?></p>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                         <?php endif; ?>
                         
                         <!-- Dicas -->
@@ -386,7 +594,10 @@ if ($editando && empty($_POST)) {
         // Validação do formulário
         document.getElementById('formSalao').addEventListener('submit', function(e) {
             const nome = document.getElementById('nome').value.trim();
-            const endereco = document.getElementById('endereco').value.trim();
+            const rua = document.getElementById('rua').value.trim();
+            const numero = document.getElementById('numero').value.trim();
+            const bairro = document.getElementById('bairro').value.trim();
+            const cidade = document.getElementById('cidade').value.trim();
             const telefone = document.getElementById('telefone').value.trim();
             
             if (nome.length < 3) {
@@ -396,10 +607,31 @@ if ($editando && empty($_POST)) {
                 return false;
             }
             
-            if (endereco.length < 10) {
+            if (rua.length < 3) {
                 e.preventDefault();
-                alert('Por favor, informe o endereço completo.');
-                document.getElementById('endereco').focus();
+                alert('Por favor, informe a rua/avenida.');
+                document.getElementById('rua').focus();
+                return false;
+            }
+            
+            if (numero.length < 1) {
+                e.preventDefault();
+                alert('Por favor, informe o número.');
+                document.getElementById('numero').focus();
+                return false;
+            }
+            
+            if (bairro.length < 2) {
+                e.preventDefault();
+                alert('Por favor, informe o bairro.');
+                document.getElementById('bairro').focus();
+                return false;
+            }
+            
+            if (cidade.length < 2) {
+                e.preventDefault();
+                alert('Por favor, informe a cidade.');
+                document.getElementById('cidade').focus();
                 return false;
             }
             
@@ -426,20 +658,20 @@ if ($editando && empty($_POST)) {
             }
         });
         
-        // Contador de caracteres para o endereço
-        document.getElementById('endereco').addEventListener('input', function() {
-            const maxLength = 255;
-            const currentLength = this.value.length;
-            const formText = this.nextElementSibling;
-            
-            formText.textContent = `${currentLength}/${maxLength} caracteres - Inclua rua, número, bairro, cidade e CEP`;
-            
-            if (currentLength > maxLength * 0.9) {
-                formText.className = 'form-text text-warning';
-            } else {
-                formText.className = 'form-text';
-            }
-        });
+        // Contador de caracteres para rua
+        const ruaInput = document.getElementById('rua');
+        if (ruaInput) {
+            ruaInput.addEventListener('input', function() {
+                const maxLength = 150;
+                const currentLength = this.value.length;
+                
+                if (currentLength > maxLength * 0.9) {
+                    this.style.borderColor = '#ffc107';
+                } else {
+                    this.style.borderColor = '';
+                }
+            });
+        }
     </script>
     
     <style>

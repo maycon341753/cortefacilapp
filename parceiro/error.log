@@ -1,0 +1,7 @@
+[20-Aug-2025 15:37:07 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 15:37:34 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 15:38:41 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 16:05:39 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 16:18:33 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 16:18:50 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[20-Aug-2025 16:28:43 Europe/Berlin] Erro ao buscar salão do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'

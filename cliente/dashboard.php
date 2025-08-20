@@ -4,10 +4,10 @@
  * Painel principal para clientes agendarem serviços
  */
 
-require_once '../includes/auth.php';
-require_once '../includes/functions.php';
-require_once '../models/agendamento.php';
-require_once '../models/salao.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/models/agendamento.php';
+require_once dirname(__DIR__) . '/models/salao.php';
 
 // Verificar se é cliente
 requireCliente();
@@ -113,10 +113,15 @@ foreach ($agendamentos_recentes as $ag) {
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
-                        Dashboard
-                    </h1>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-primary d-md-none me-3 sidebar-toggle" type="button">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="h2 mb-0">
+                            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                            Dashboard
+                        </h1>
+                    </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <a href="agendar.php" class="btn btn-primary">

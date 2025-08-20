@@ -12,7 +12,7 @@ if (isLoggedIn()) {
     $usuario = getLoggedUser();
     
     // Log da atividade de logout
-    logActivity($usuario['id'], 'logout', 'Usuário fez logout do sistema');
+    logAtividade("Usuário {$usuario['nome']} fez logout do sistema", 'INFO');
     
     // Fazer logout
     logout();
@@ -21,7 +21,7 @@ if (isLoggedIn()) {
     setFlashMessage('success', 'Logout realizado com sucesso!');
 }
 
-// Redirecionar para a página inicial
-header('Location: index.php');
+// Redirecionar para a página de login
+header('Location: login.php');
 exit;
 ?>

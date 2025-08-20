@@ -21,15 +21,33 @@ class Usuario {
      */
     public function cadastrar($dados) {
         try {
-            $sql = "INSERT INTO {$this->table} (nome, email, senha, tipo_usuario, telefone) 
-                    VALUES (:nome, :email, :senha, :tipo_usuario, :telefone)";
-            
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':nome', $dados['nome']);
-            $stmt->bindParam(':email', $dados['email']);
-            $stmt->bindParam(':senha', password_hash($dados['senha'], PASSWORD_DEFAULT));
-            $stmt->bindParam(':tipo_usuario', $dados['tipo_usuario']);
-            $stmt->bindParam(':telefone', $dados['telefone']);
+            // Para clientes, incluir CPF
+            if ($dados['tipo_usuario'] === 'cliente') {
+                $sql = "INSERT INTO {$this->table} (nome, email, senha, tipo_usuario, telefone, cpf) 
+                        VALUES (:nome, :email, :senha, :tipo_usuario, :telefone, :cpf)";
+                
+                $stmt = $this->conn->prepare($sql);
+                $senha_hash = password_hash($dados['senha'], PASSWORD_DEFAULT);
+                $cpf_limpo = preg_replace('/\D/', '', $dados['cpf']); // Remove formatação
+                $stmt->bindParam(':nome', $dados['nome']);
+                $stmt->bindParam(':email', $dados['email']);
+                $stmt->bindParam(':senha', $senha_hash);
+                $stmt->bindParam(':tipo_usuario', $dados['tipo_usuario']);
+                $stmt->bindParam(':telefone', $dados['telefone']);
+                $stmt->bindParam(':cpf', $cpf_limpo);
+            } else {
+                // Para parceiros, usar campos básicos (documento será tratado na tabela saloes)
+                $sql = "INSERT INTO {$this->table} (nome, email, senha, tipo_usuario, telefone) 
+                        VALUES (:nome, :email, :senha, :tipo_usuario, :telefone)";
+                
+                $stmt = $this->conn->prepare($sql);
+                $senha_hash = password_hash($dados['senha'], PASSWORD_DEFAULT);
+                $stmt->bindParam(':nome', $dados['nome']);
+                $stmt->bindParam(':email', $dados['email']);
+                $stmt->bindParam(':senha', $senha_hash);
+                $stmt->bindParam(':tipo_usuario', $dados['tipo_usuario']);
+                $stmt->bindParam(':telefone', $dados['telefone']);
+            }
             
             return $stmt->execute();
         } catch(PDOException $e) {
@@ -86,6 +104,25 @@ class Usuario {
     }
     
     /**
+     * Busca usuário por email
+     * @param string $email
+     * @return array|false
+     */
+    public function buscarPorEmail($email) {
+        try {
+            $sql = "SELECT id, nome, email, tipo_usuario, telefone, created_at FROM {$this->table} WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            
+            return $stmt->fetch();
+        } catch(PDOException $e) {
+            error_log("Erro ao buscar usuário por email: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Verifica se email já existe
      * @param string $email
      * @return bool
@@ -100,6 +137,145 @@ class Usuario {
             return $stmt->fetchColumn() > 0;
         } catch(PDOException $e) {
             error_log("Erro ao verificar email: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se CPF já existe
+     * @param string $cpf
+     * @return bool
+     */
+    public function cpfExiste($cpf) {
+        try {
+            $cpfLimpo = preg_replace('/\D/', '', $cpf);
+            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE cpf = :cpf";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':cpf', $cpfLimpo);
+            $stmt->execute();
+            
+            return $stmt->fetchColumn() > 0;
+        } catch(PDOException $e) {
+            error_log("Erro ao verificar CPF: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Cadastra dados do salão para parceiros
+     * @param int $usuario_id
+     * @param array $dados
+     * @return bool
+     */
+    public function cadastrarSalao($usuario_id, $dados) {
+        try {
+            // SQL adaptado para a estrutura do banco online (usando id_dono)
+            $sql = "INSERT INTO saloes (id_dono, nome, endereco, telefone, documento, tipo_documento, razao_social, inscricao_estadual, descricao) 
+                    VALUES (:id_dono, :nome, :endereco, :telefone, :documento, :tipo_documento, :razao_social, :inscricao_estadual, :descricao)";
+            
+            $stmt = $this->conn->prepare($sql);
+            
+            // Preparar variáveis para bind
+            $documento_limpo = preg_replace('/\D/', '', $dados['documento']);
+            $razao_social = $dados['razao_social'] ?? null;
+            $inscricao_estadual = $dados['inscricao_estadual'] ?? null;
+            $telefone = $dados['telefone'] ?? '';
+            $descricao = $dados['descricao'] ?? 'Salão cadastrado via sistema';
+            
+            // Combinar endereço completo (incluindo bairro, cidade e CEP se disponíveis)
+            $endereco_completo = $dados['endereco'] ?? 'Endereço não informado';
+            if (!empty($dados['bairro']) || !empty($dados['cidade']) || !empty($dados['cep'])) {
+                $endereco_completo .= ', ' . ($dados['bairro'] ?? '') . ', ' . ($dados['cidade'] ?? '') . ' - CEP: ' . ($dados['cep'] ?? '');
+            }
+            
+            $stmt->bindParam(':id_dono', $usuario_id);
+            $stmt->bindParam(':nome', $dados['nome']);
+            $stmt->bindParam(':endereco', $endereco_completo);
+            $stmt->bindParam(':telefone', $telefone);
+            $stmt->bindParam(':documento', $documento_limpo);
+            $stmt->bindParam(':tipo_documento', $dados['tipo_documento']);
+            $stmt->bindParam(':razao_social', $razao_social);
+            $stmt->bindParam(':inscricao_estadual', $inscricao_estadual);
+            $stmt->bindParam(':descricao', $descricao);
+            
+            return $stmt->execute();
+        } catch(PDOException $e) {
+            error_log("Erro ao cadastrar salão: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Cadastra parceiro com transação (usuário + salão)
+     * @param array $dadosUsuario
+     * @param array $dadosSalao
+     * @return bool
+     */
+    public function cadastrarParceiro($dadosUsuario, $dadosSalao) {
+        try {
+            $this->conn->beginTransaction();
+            
+            // Cadastrar usuário
+            $resultadoUsuario = $this->cadastrar($dadosUsuario);
+            if ($resultadoUsuario) {
+                $usuario_id = $this->conn->lastInsertId();
+                error_log("Usuário cadastrado com ID: " . $usuario_id);
+                
+                // Verificar se o ID foi obtido corretamente
+                if ($usuario_id == 0 || empty($usuario_id)) {
+                    // Tentar obter o ID de outra forma
+                    $stmt = $this->conn->prepare("SELECT id FROM usuarios WHERE email = ? ORDER BY id DESC LIMIT 1");
+                    $stmt->execute([$dadosUsuario['email']]);
+                    $user = $stmt->fetch();
+                    $usuario_id = $user ? $user['id'] : 0;
+                    error_log("ID obtido via SELECT: " . $usuario_id);
+                }
+                
+                if ($usuario_id > 0) {
+                    // Cadastrar salão
+                    if ($this->cadastrarSalao($usuario_id, $dadosSalao)) {
+                        $this->conn->commit();
+                        error_log("Parceiro cadastrado com sucesso - Usuario ID: " . $usuario_id);
+                        return true;
+                    } else {
+                        $this->conn->rollback();
+                        error_log("Erro ao cadastrar salão - rollback executado");
+                        return false;
+                    }
+                } else {
+                    $this->conn->rollback();
+                    error_log("Erro: ID do usuário não foi obtido corretamente");
+                    return false;
+                }
+            } else {
+                $this->conn->rollback();
+                error_log("Erro ao cadastrar usuário - rollback executado");
+                return false;
+            }
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            error_log("Erro ao cadastrar parceiro: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se documento já existe na tabela saloes
+     * @param string $documento
+     * @return bool
+     */
+    public function documentoSalaoExiste($documento) {
+        try {
+            $documentoLimpo = preg_replace('/\D/', '', $documento);
+            $sql = "SELECT COUNT(*) FROM saloes WHERE documento = :documento";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':documento', $documentoLimpo);
+            $stmt->execute();
+            
+            return $stmt->fetchColumn() > 0;
+        } catch(PDOException $e) {
+            error_log("Erro ao verificar documento do salão: " . $e->getMessage());
             return false;
         }
     }

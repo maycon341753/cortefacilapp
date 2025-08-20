@@ -131,10 +131,15 @@ sort($cidades);
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="fas fa-store me-2 text-primary"></i>
-                        Salões Parceiros
-                    </h1>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-primary d-md-none me-3 sidebar-toggle" type="button">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="h2 mb-0">
+                            <i class="fas fa-store me-2 text-primary"></i>
+                            Salões Parceiros
+                        </h1>
+                    </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <a href="agendar.php" class="btn btn-primary">

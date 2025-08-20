@@ -30,11 +30,28 @@ const CorteFacil = {
             });
         });
         
+        // Criar overlay da sidebar
+        this.createSidebarOverlay();
+        
         // Toggle sidebar em mobile
         const sidebarToggle = document.querySelector('.sidebar-toggle');
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', this.toggleSidebar);
         }
+        
+        // Fechar sidebar ao clicar no overlay
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('sidebar-overlay')) {
+                CorteFacil.closeSidebar();
+            }
+        });
+        
+        // Fechar sidebar com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                CorteFacil.closeSidebar();
+            }
+        });
         
         // Fechar alertas automaticamente
         this.autoCloseAlerts();
@@ -64,11 +81,52 @@ const CorteFacil = {
         this.animateOnScroll();
     },
     
+    // Criar overlay para sidebar
+    createSidebarOverlay: function() {
+        if (!document.querySelector('.sidebar-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+        }
+    },
+    
     // Toggle sidebar
     toggleSidebar: function() {
         const sidebar = document.querySelector('.sidebar');
-        if (sidebar) {
-            sidebar.classList.toggle('show');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar && overlay) {
+            const isOpen = sidebar.classList.contains('show');
+            
+            if (isOpen) {
+                CorteFacil.closeSidebar();
+            } else {
+                CorteFacil.openSidebar();
+            }
+        }
+    },
+    
+    // Abrir sidebar
+    openSidebar: function() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar && overlay) {
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    },
+    
+    // Fechar sidebar
+    closeSidebar: function() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar && overlay) {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
     },
     

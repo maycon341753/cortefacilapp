@@ -275,4 +275,112 @@ function logAtividade($mensagem, $nivel = 'INFO') {
     
     file_put_contents('../logs/atividades.log', $log, FILE_APPEND | LOCK_EX);
 }
+
+/**
+ * Valida CPF
+ * @param string $cpf
+ * @return bool
+ */
+function validarCPF($cpf) {
+    // Remove formatação
+    $cpf = preg_replace('/\D/', '', $cpf);
+    
+    // Verifica se tem 11 dígitos
+    if (strlen($cpf) !== 11) {
+        return false;
+    }
+    
+    // Verifica se todos os dígitos são iguais
+    if (preg_match('/^(\d)\1{10}$/', $cpf)) {
+        return false;
+    }
+    
+    // Calcula primeiro dígito verificador
+    $soma = 0;
+    for ($i = 0; $i < 9; $i++) {
+        $soma += intval($cpf[$i]) * (10 - $i);
+    }
+    $resto = $soma % 11;
+    $dv1 = $resto < 2 ? 0 : 11 - $resto;
+    
+    // Calcula segundo dígito verificador
+    $soma = 0;
+    for ($i = 0; $i < 10; $i++) {
+        $soma += intval($cpf[$i]) * (11 - $i);
+    }
+    $resto = $soma % 11;
+    $dv2 = $resto < 2 ? 0 : 11 - $resto;
+    
+    // Verifica se os dígitos calculados conferem
+    return ($dv1 == intval($cpf[9]) && $dv2 == intval($cpf[10]));
+}
+
+/**
+ * Valida CNPJ
+ * @param string $cnpj
+ * @return bool
+ */
+function validarCNPJ($cnpj) {
+    // Remove formatação
+    $cnpj = preg_replace('/\D/', '', $cnpj);
+    
+    // Verifica se tem 14 dígitos
+    if (strlen($cnpj) !== 14) {
+        return false;
+    }
+    
+    // Verifica se todos os dígitos são iguais
+    if (preg_match('/^(\d)\1{13}$/', $cnpj)) {
+        return false;
+    }
+    
+    // Calcula primeiro dígito verificador
+    $soma = 0;
+    $peso = 5;
+    for ($i = 0; $i < 12; $i++) {
+        $soma += intval($cnpj[$i]) * $peso;
+        $peso = $peso == 2 ? 9 : $peso - 1;
+    }
+    $resto = $soma % 11;
+    $dv1 = $resto < 2 ? 0 : 11 - $resto;
+    
+    // Calcula segundo dígito verificador
+    $soma = 0;
+    $peso = 6;
+    for ($i = 0; $i < 13; $i++) {
+        $soma += intval($cnpj[$i]) * $peso;
+        $peso = $peso == 2 ? 9 : $peso - 1;
+    }
+    $resto = $soma % 11;
+    $dv2 = $resto < 2 ? 0 : 11 - $resto;
+    
+    // Verifica se os dígitos calculados conferem
+    return ($dv1 == intval($cnpj[12]) && $dv2 == intval($cnpj[13]));
+}
+
+/**
+ * Formata CPF
+ * @param string $cpf
+ * @return string
+ */
+function formatarCPF($cpf) {
+    $cpf = preg_replace('/\D/', '', $cpf);
+    if (strlen($cpf) === 11) {
+        return substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2);
+    }
+    return $cpf;
+}
+
+/**
+ * Formata CNPJ
+ * @param string $cnpj
+ * @return string
+ */
+function formatarCNPJ($cnpj) {
+    $cnpj = preg_replace('/\D/', '', $cnpj);
+    if (strlen($cnpj) === 14) {
+        return substr($cnpj, 0, 2) . '.' . substr($cnpj, 2, 3) . '.' . substr($cnpj, 5, 3) . '/' . substr($cnpj, 8, 4) . '-' . substr($cnpj, 12, 2);
+    }
+    return $cnpj;
+}
 ?>

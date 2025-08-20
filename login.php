@@ -154,20 +154,7 @@ if ($flash) {
                     </div>
                 </div>
                 
-                <!-- Contas de teste -->
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Contas de Teste
-                        </h6>
-                        <small class="text-muted">
-                            <strong>Admin:</strong> admin@cortefacil.com / password<br>
-                            <strong>Cliente:</strong> cliente@teste.com / 123456<br>
-                            <strong>Parceiro:</strong> parceiro@teste.com / 123456
-                        </small>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
