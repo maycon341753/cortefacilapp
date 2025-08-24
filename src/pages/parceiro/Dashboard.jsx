@@ -109,23 +109,29 @@ const ParceiroDashboard = () => {
   return (
     <div className="container-fluid py-4">
       {/* Cabeçalho */}
-      <div className="row mb-4">
+      <div className="row mb-3 mb-md-4">
         <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
             <div>
-              <h2 className="text-gradient fw-bold mb-1">Dashboard do Parceiro</h2>
-              <p className="text-muted mb-0">
-                Bem-vindo, {user?.nome}! Gerencie seu salão e acompanhe o desempenho.
+              <h2 className="text-gradient fw-bold mb-1 fs-4 fs-md-3">
+                <span className="d-none d-sm-inline">Dashboard do Parceiro</span>
+                <span className="d-sm-none">Dashboard</span>
+              </h2>
+              <p className="text-muted mb-0 small">
+                Bem-vindo, {user?.nome}! 
+                <span className="d-none d-md-inline">Gerencie seu salão e acompanhe o desempenho.</span>
               </p>
             </div>
-            <div className="d-flex gap-2">
+            <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-lg-auto">
               <Link to="/parceiro/agendamentos/novo" className="btn btn-primary">
                 <i className="fas fa-plus me-2"></i>
-                Novo Agendamento
+                <span className="d-none d-sm-inline">Novo Agendamento</span>
+                <span className="d-sm-none">Novo</span>
               </Link>
               <Link to="/parceiro/relatorios" className="btn btn-outline-primary">
                 <i className="fas fa-chart-bar me-2"></i>
-                Relatórios
+                <span className="d-none d-sm-inline">Relatórios</span>
+                <span className="d-sm-none">Relatórios</span>
               </Link>
             </div>
           </div>
@@ -133,51 +139,51 @@ const ParceiroDashboard = () => {
       </div>
 
       {/* Cards de estatísticas */}
-      <div className="row mb-4">
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
+      <div className="row mb-3 mb-md-4">
+        <div className="col-6 col-md-4 col-lg-2 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body text-center">
-              <div className="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
-                <i className="fas fa-calendar-day text-primary fs-4"></i>
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="bg-primary bg-opacity-10 rounded-circle p-2 p-md-3 mx-auto mb-2 mb-md-3" style={{ width: '40px', height: '40px' }}>
+                <i className="fas fa-calendar-day text-primary fs-6 fs-md-4"></i>
               </div>
-              <h3 className="fw-bold mb-1">{stats.agendamentosHoje}</h3>
-              <p className="text-muted mb-0 small">Hoje</p>
+              <h3 className="fw-bold mb-1 fs-5 fs-md-4">{stats.agendamentosHoje}</h3>
+              <p className="text-muted mb-0 small text-truncate">Hoje</p>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div className="col-6 col-md-4 col-lg-2 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body text-center">
-              <div className="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
-                <i className="fas fa-dollar-sign text-success fs-4"></i>
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="bg-success bg-opacity-10 rounded-circle p-2 p-md-3 mx-auto mb-2 mb-md-3" style={{ width: '40px', height: '40px' }}>
+                <i className="fas fa-dollar-sign text-success fs-6 fs-md-4"></i>
               </div>
-              <h3 className="fw-bold mb-1">{formatCurrency(stats.receitaHoje)}</h3>
-              <p className="text-muted mb-0 small">Receita Hoje</p>
+              <h3 className="fw-bold mb-1 fs-6 fs-md-4">{formatCurrency(stats.receitaHoje)}</h3>
+              <p className="text-muted mb-0 small text-truncate">Receita Hoje</p>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div className="col-6 col-md-4 col-lg-2 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body text-center">
-              <div className="bg-info bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
-                <i className="fas fa-calendar-check text-info fs-4"></i>
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="bg-info bg-opacity-10 rounded-circle p-2 p-md-3 mx-auto mb-2 mb-md-3" style={{ width: '40px', height: '40px' }}>
+                <i className="fas fa-calendar-check text-info fs-6 fs-md-4"></i>
               </div>
-              <h3 className="fw-bold mb-1">{stats.agendamentosMes}</h3>
-              <p className="text-muted mb-0 small">Este Mês</p>
+              <h3 className="fw-bold mb-1 fs-5 fs-md-4">{stats.agendamentosMes}</h3>
+              <p className="text-muted mb-0 small text-truncate">Este Mês</p>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div className="col-6 col-md-4 col-lg-2 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body text-center">
-              <div className="bg-warning bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
-                <i className="fas fa-chart-line text-warning fs-4"></i>
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="bg-warning bg-opacity-10 rounded-circle p-2 p-md-3 mx-auto mb-2 mb-md-3" style={{ width: '40px', height: '40px' }}>
+                <i className="fas fa-chart-line text-warning fs-6 fs-md-4"></i>
               </div>
-              <h3 className="fw-bold mb-1">{formatCurrency(stats.receitaMes)}</h3>
-              <p className="text-muted mb-0 small">Receita Mês</p>
+              <h3 className="fw-bold mb-1 fs-6 fs-md-4">{formatCurrency(stats.receitaMes)}</h3>
+              <p className="text-muted mb-0 small text-truncate">Receita Mês</p>
             </div>
           </div>
         </div>

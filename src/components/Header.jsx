@@ -36,11 +36,11 @@ const Header = ({ userType }) => {
   const unreadCount = getUnreadNotificationsCount()
 
   return (
-    <header className="app-header d-flex align-items-center justify-content-between px-4">
+    <header className="app-header d-flex align-items-center justify-content-between px-2 px-md-4">
       {/* Lado esquerdo - Toggle sidebar e título */}
       <div className="d-flex align-items-center">
         <button
-          className="btn btn-link p-0 me-3 sidebar-toggle"
+          className="btn btn-link p-0 me-2 me-md-3 sidebar-toggle"
           onClick={toggleSidebar}
           aria-label="Toggle sidebar"
         >
@@ -48,11 +48,12 @@ const Header = ({ userType }) => {
         </button>
         
         <div className="d-flex align-items-center">
-          <h1 className="h4 mb-0 text-gradient fw-bold">
-            CorteFácil
+          <h1 className="h5 h4-md mb-0 text-gradient fw-bold">
+            <span className="d-none d-sm-inline">CorteFácil</span>
+            <span className="d-inline d-sm-none">CF</span>
           </h1>
           {userType && (
-            <span className="badge bg-primary ms-2">
+            <span className="badge bg-primary ms-2 d-none d-md-inline">
               {getUserTypeLabel(userType)}
             </span>
           )}
@@ -60,9 +61,9 @@ const Header = ({ userType }) => {
       </div>
 
       {/* Lado direito - Notificações e usuário */}
-      <div className="d-flex align-items-center gap-3">
+      <div className="d-flex align-items-center gap-2 gap-md-3">
         {/* Notificações */}
-        <div className="position-relative">
+        <div className="position-relative d-none d-sm-block">
           <button
             className="btn btn-link p-0 position-relative"
             onClick={() => setShowNotifications(!showNotifications)}
@@ -79,7 +80,7 @@ const Header = ({ userType }) => {
           
           {/* Dropdown de notificações */}
           {showNotifications && (
-            <div className="position-absolute end-0 mt-2 bg-white border rounded shadow-lg" style={{ width: '320px', zIndex: 1050 }}>
+            <div className="position-absolute end-0 mt-2 bg-white border rounded shadow-lg" style={{ width: isMobile ? '280px' : '320px', zIndex: 1050 }}>
               <div className="p-3 border-bottom">
                 <h6 className="mb-0">Notificações</h6>
               </div>
@@ -127,26 +128,24 @@ const Header = ({ userType }) => {
             aria-label="Menu do usuário"
           >
             <div className="d-flex align-items-center">
-              <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '32px', height: '32px' }}>
+              <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: isMobile ? '28px' : '32px', height: isMobile ? '28px' : '32px' }}>
                 <i className="fas fa-user text-white small"></i>
               </div>
-              {!isMobile && (
-                <div className="text-start">
-                  <div className="fw-medium small text-dark">
-                    {user?.nome || 'Usuário'}
-                  </div>
-                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                    {user?.email}
-                  </div>
+              <div className="text-start d-none d-md-block">
+                <div className="fw-medium small text-dark">
+                  {user?.nome || 'Usuário'}
                 </div>
-              )}
-              <i className="fas fa-chevron-down ms-2 small text-muted"></i>
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                  {user?.email}
+                </div>
+              </div>
+              <i className="fas fa-chevron-down ms-2 small text-muted d-none d-sm-inline"></i>
             </div>
           </button>
           
           {/* Dropdown do usuário */}
           {showUserMenu && (
-            <div className="position-absolute end-0 mt-2 bg-white border rounded shadow-lg" style={{ minWidth: '200px', zIndex: 1050 }}>
+            <div className="position-absolute end-0 mt-2 bg-white border rounded shadow-lg" style={{ minWidth: isMobile ? '180px' : '200px', zIndex: 1050 }}>
               <div className="p-3 border-bottom">
                 <div className="fw-medium">{user?.nome}</div>
                 <div className="text-muted small">{user?.email}</div>

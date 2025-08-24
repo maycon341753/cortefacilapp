@@ -84,16 +84,17 @@ const ClienteDashboard = () => {
       {/* Cabeçalho */}
       <div className="row mb-4">
         <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div className="flex-grow-1">
               <h2 className="text-gradient fw-bold mb-1">Dashboard</h2>
               <p className="text-muted mb-0">
                 Bem-vindo de volta, {user?.nome}! Aqui está um resumo da sua atividade.
               </p>
             </div>
-            <Link to="/cliente/agendar" className="btn btn-primary btn-lg">
+            <Link to="/cliente/agendar" className="btn btn-primary btn-lg flex-shrink-0">
               <i className="fas fa-plus me-2"></i>
-              Novo Agendamento
+              <span className="d-none d-sm-inline">Novo Agendamento</span>
+              <span className="d-sm-none">Agendar</span>
             </Link>
           </div>
         </div>
@@ -101,64 +102,64 @@ const ClienteDashboard = () => {
 
       {/* Cards de estatísticas */}
       <div className="row mb-4">
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-calendar-check text-primary fs-4"></i>
+                <div className="bg-primary bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-calendar-check text-primary fs-5 fs-md-4"></i>
                 </div>
-                <div>
-                  <h3 className="fw-bold mb-0">{stats.proximosAgendamentos}</h3>
-                  <p className="text-muted mb-0 small">Próximos Agendamentos</p>
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.proximosAgendamentos}</h4>
+                  <p className="text-muted mb-0 small text-truncate">Próximos Agendamentos</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-success bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-check-circle text-success fs-4"></i>
+                <div className="bg-success bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-check-circle text-success fs-5 fs-md-4"></i>
                 </div>
-                <div>
-                  <h3 className="fw-bold mb-0">{stats.agendamentosRealizados}</h3>
-                  <p className="text-muted mb-0 small">Agendamentos Realizados</p>
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.agendamentosRealizados}</h4>
+                  <p className="text-muted mb-0 small text-truncate">Agendamentos Realizados</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-info bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-dollar-sign text-info fs-4"></i>
+                <div className="bg-info bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-dollar-sign text-info fs-5 fs-md-4"></i>
                 </div>
-                <div>
-                  <h3 className="fw-bold mb-0">{formatCurrency(stats.valorGasto)}</h3>
-                  <p className="text-muted mb-0 small">Total Gasto</p>
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{formatCurrency(stats.valorGasto)}</h4>
+                  <p className="text-muted mb-0 small text-truncate">Total Gasto</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-store text-warning fs-4"></i>
+                <div className="bg-warning bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-store text-warning fs-5 fs-md-4"></i>
                 </div>
-                <div>
-                  <h3 className="fw-bold mb-0">{stats.saloesVisitados}</h3>
-                  <p className="text-muted mb-0 small">Salões Visitados</p>
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.saloesVisitados}</h4>
+                  <p className="text-muted mb-0 small text-truncate">Salões Visitados</p>
                 </div>
               </div>
             </div>
@@ -171,10 +172,11 @@ const ClienteDashboard = () => {
         <div className="col-lg-8 mb-4">
           <div className="card border-0 shadow-sm">
             <div className="card-header bg-white border-0 py-3">
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                 <h5 className="fw-bold mb-0">
                   <i className="fas fa-calendar-alt me-2 text-primary"></i>
-                  Próximos Agendamentos
+                  <span className="d-none d-sm-inline">Próximos Agendamentos</span>
+                  <span className="d-sm-none">Agendamentos</span>
                 </h5>
                 <Link to="/cliente/agendamentos" className="btn btn-outline-primary btn-sm">
                   Ver Todos

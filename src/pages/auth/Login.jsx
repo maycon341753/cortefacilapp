@@ -87,16 +87,16 @@ const Login = () => {
     <div className="min-vh-100 d-flex align-items-center bg-light">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-md-6 col-lg-5">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
             <div className="card border-0 shadow-lg">
-              <div className="card-body p-5">
+              <div className="card-body p-3 p-sm-4 p-md-5">
                 {/* Logo e título */}
-                <div className="text-center mb-4">
-                  <div className="bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                    <i className="fas fa-cut text-white fs-2"></i>
+                <div className="text-center mb-3 mb-md-4">
+                  <div className="bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '60px', height: '60px' }}>
+                    <i className="fas fa-cut text-white fs-3"></i>
                   </div>
-                  <h2 className="text-gradient fw-bold mb-2">CorteFácil</h2>
-                  <p className="text-muted">Faça login em sua conta</p>
+                  <h2 className="text-gradient fw-bold mb-2 fs-3 fs-md-2">CorteFácil</h2>
+                  <p className="text-muted small">Faça login em sua conta</p>
                 </div>
 
                 {/* Formulário */}
@@ -141,8 +141,8 @@ const Login = () => {
                     )}
                   </div>
 
-                  <div className="mb-4">
-                    <div className="d-flex justify-content-between align-items-center">
+                  <div className="mb-3 mb-md-4">
+                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                       <div className="form-check">
                         <input
                           className="form-check-input"
@@ -153,7 +153,7 @@ const Login = () => {
                           onChange={handleChange}
                           disabled={isSubmitting}
                         />
-                        <label className="form-check-label text-muted" htmlFor="lembrar">
+                        <label className="form-check-label text-muted small" htmlFor="lembrar">
                           Lembrar de mim
                         </label>
                       </div>

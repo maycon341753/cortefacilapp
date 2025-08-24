@@ -19,7 +19,7 @@ import Register from './pages/auth/Register'
 import ClienteDashboard from './pages/cliente/Dashboard'
 import ClienteAgendamentos from './pages/cliente/Agendamentos'
 import ClienteBuscarSaloes from './pages/cliente/BuscarSaloes'
-import ClienteNovoAgendamento from './pages/cliente/NovoAgendamento'
+import ClienteAgendar from './pages/cliente/Agendar'
 import ClientePerfil from './pages/cliente/Perfil'
 
 import ParceiroDashboard from './pages/parceiro/Dashboard'
@@ -79,10 +79,10 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/cliente/novo-agendamento" element={
+              <Route path="/cliente/agendar" element={
                 <ProtectedRoute allowedRoles={['cliente']}>
                   <Layout userType="cliente">
-                    <ClienteNovoAgendamento />
+                    <ClienteAgendar />
                   </Layout>
                 </ProtectedRoute>
               } />

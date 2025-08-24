@@ -182,28 +182,29 @@ const Register = () => {
   ]
 
   return (
-    <div className="min-vh-100 d-flex align-items-center bg-light py-5">
+    <div className="min-vh-100 d-flex align-items-center bg-light py-3 py-md-5">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-md-8 col-lg-6">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-6">
             <div className="card border-0 shadow-lg">
-              <div className="card-body p-5">
+              <div className="card-body p-3 p-md-4 p-lg-5">
                 {/* Logo e título */}
-                <div className="text-center mb-4">
-                  <div className="bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                    <i className="fas fa-cut text-white fs-2"></i>
+                <div className="text-center mb-3 mb-md-4">
+                  <div className="bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-2 mb-md-3" style={{ width: '60px', height: '60px' }}>
+                    <i className="fas fa-cut text-white fs-4 fs-md-2"></i>
                   </div>
-                  <h2 className="text-gradient fw-bold mb-2">CorteFácil</h2>
-                  <p className="text-muted">Crie sua conta</p>
+                  <h2 className="text-gradient fw-bold mb-1 mb-md-2 fs-4 fs-md-3">CorteFácil</h2>
+                  <p className="text-muted small">Crie sua conta</p>
                 </div>
 
                 {/* Indicador de progresso */}
-                <div className="mb-4">
+                <div className="mb-3 mb-md-4">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className={`badge ${currentStep >= 1 ? 'bg-primary' : 'bg-light text-dark'}`}>
-                      1. Dados Pessoais
+                    <span className={`badge small ${currentStep >= 1 ? 'bg-primary' : 'bg-light text-dark'}`}>
+                      <span className="d-none d-sm-inline">1. Dados Pessoais</span>
+                      <span className="d-sm-none">1. Dados</span>
                     </span>
-                    <span className={`badge ${currentStep >= 2 ? 'bg-primary' : 'bg-light text-dark'}`}>
+                    <span className={`badge small ${currentStep >= 2 ? 'bg-primary' : 'bg-light text-dark'}`}>
                       2. Finalizar
                     </span>
                   </div>
@@ -239,8 +240,8 @@ const Register = () => {
                       </div>
 
                       <div className="row">
-                        <div className="col-md-6 mb-3">
-                          <label htmlFor="email" className="form-label fw-medium">
+                        <div className="col-12 col-md-6 mb-3">
+                          <label htmlFor="email" className="form-label fw-medium small">
                             <i className="fas fa-envelope me-2 text-muted"></i>
                             Email
                           </label>
@@ -255,8 +256,8 @@ const Register = () => {
                           />
                           {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                         </div>
-                        <div className="col-md-6 mb-3">
-                          <label htmlFor="telefone" className="form-label fw-medium">
+                        <div className="col-12 col-md-6 mb-3">
+                          <label htmlFor="telefone" className="form-label fw-medium small">
                             <i className="fas fa-phone me-2 text-muted"></i>
                             Telefone
                           </label>
@@ -275,8 +276,8 @@ const Register = () => {
                       </div>
 
                       <div className="row">
-                        <div className="col-md-6 mb-3">
-                          <label htmlFor="cpf" className="form-label fw-medium">
+                        <div className="col-12 col-md-6 mb-3">
+                          <label htmlFor="cpf" className="form-label fw-medium small">
                             <i className="fas fa-id-card me-2 text-muted"></i>
                             CPF
                           </label>
@@ -292,7 +293,7 @@ const Register = () => {
                           />
                           {errors.cpf && <div className="invalid-feedback">{errors.cpf}</div>}
                         </div>
-                        <div className="col-md-6 mb-3">
+                        <div className="col-12 col-md-6 mb-3">
                           <label htmlFor="dataNascimento" className="form-label fw-medium">
                             <i className="fas fa-calendar me-2 text-muted"></i>
                             Data de Nascimento
@@ -484,8 +485,8 @@ const Register = () => {
 
                       {/* Senha */}
                       <div className="row">
-                        <div className="col-md-6 mb-3">
-                          <label htmlFor="senha" className="form-label fw-medium">
+                        <div className="col-12 col-md-6 mb-3">
+                          <label htmlFor="senha" className="form-label fw-medium small">
                             <i className="fas fa-lock me-2 text-muted"></i>
                             Senha
                           </label>
@@ -500,8 +501,8 @@ const Register = () => {
                           />
                           {errors.senha && <div className="invalid-feedback">{errors.senha}</div>}
                         </div>
-                        <div className="col-md-6 mb-3">
-                          <label htmlFor="confirmarSenha" className="form-label fw-medium">
+                        <div className="col-12 col-md-6 mb-3">
+                          <label htmlFor="confirmarSenha" className="form-label fw-medium small">
                             <i className="fas fa-lock me-2 text-muted"></i>
                             Confirmar Senha
                           </label>
@@ -550,10 +551,11 @@ const Register = () => {
                         </div>
                       </div>
 
-                      <div className="d-flex justify-content-between">
+                      <div className="d-flex flex-column flex-sm-row justify-content-between gap-2">
                         <button type="button" className="btn btn-outline-secondary" onClick={handleBack}>
                           <i className="fas fa-arrow-left me-2"></i>
-                          Voltar
+                          <span className="d-none d-sm-inline">Voltar</span>
+                          <span className="d-sm-none">Voltar</span>
                         </button>
                         <button
                           type="submit"
@@ -563,12 +565,14 @@ const Register = () => {
                           {isSubmitting ? (
                             <>
                               <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                              Cadastrando...
+                              <span className="d-none d-sm-inline">Cadastrando...</span>
+                              <span className="d-sm-none">Criando...</span>
                             </>
                           ) : (
                             <>
                               <i className="fas fa-user-plus me-2"></i>
-                              Criar Conta
+                              <span className="d-none d-sm-inline">Criar Conta</span>
+                              <span className="d-sm-none">Criar</span>
                             </>
                           )}
                         </button>

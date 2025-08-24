@@ -125,14 +125,14 @@ const Sidebar = ({ userType }) => {
   return (
     <aside className={`app-sidebar ${sidebarOpen && isMobile ? 'show' : ''} ${!sidebarOpen && isMobile ? 'collapsed' : ''}`}>
       {/* Logo e título */}
-      <div className="p-4 border-bottom">
+      <div className="p-3 p-md-4 border-bottom">
         <div className="d-flex align-items-center">
-          <div className="bg-gradient rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+          <div className="bg-gradient rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '36px', height: '36px' }}>
             <i className="fas fa-cut text-white"></i>
           </div>
-          <div>
-            <h5 className="mb-0 text-gradient fw-bold">CorteFácil</h5>
-            <small className="text-muted">
+          <div className="min-width-0 flex-grow-1">
+            <h6 className="mb-0 text-gradient fw-bold text-truncate">CorteFácil</h6>
+            <small className="text-muted text-truncate d-block">
               {userType === 'admin' && 'Administração'}
               {userType === 'parceiro' && 'Parceiro'}
               {userType === 'cliente' && 'Cliente'}
@@ -159,8 +159,8 @@ const Sidebar = ({ userType }) => {
       </div>
 
       {/* Menu de navegação */}
-      <nav className="flex-grow-1 py-3">
-        <ul className="list-unstyled px-3">
+      <nav className="flex-grow-1 p-2 p-md-3">
+        <ul className="list-unstyled">
           {currentMenuItems.map((item, index) => {
             const isActive = location.pathname === item.path
             
@@ -169,7 +169,7 @@ const Sidebar = ({ userType }) => {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) => 
-                    `nav-link d-flex align-items-center p-3 rounded transition-custom text-decoration-none ${
+                    `nav-link d-flex align-items-center px-2 px-md-3 py-2 rounded transition-custom text-decoration-none ${
                       isActive 
                         ? 'bg-primary text-white shadow-sm' 
                         : 'text-dark hover-bg-light'
@@ -177,13 +177,13 @@ const Sidebar = ({ userType }) => {
                   }
                   onClick={handleLinkClick}
                 >
-                  <i className={`${item.icon} me-3`} style={{ width: '20px' }}></i>
-                  <div className="flex-grow-1">
-                    <div className="fw-medium" style={{ fontSize: '0.9rem' }}>
+                  <i className={`${item.icon} me-2 me-md-3 flex-shrink-0`} style={{ width: '20px' }}></i>
+                  <div className="flex-grow-1 min-width-0">
+                    <div className="fw-medium text-truncate" style={{ fontSize: '0.9rem' }}>
                       {item.label}
                     </div>
                     <div 
-                      className={`small ${
+                      className={`small text-truncate ${
                         isActive ? 'text-white-50' : 'text-muted'
                       }`}
                       style={{ fontSize: '0.75rem' }}

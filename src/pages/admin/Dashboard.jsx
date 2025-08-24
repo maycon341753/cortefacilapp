@@ -157,17 +157,17 @@ const AdminDashboard = () => {
 
       {/* Cards de estatísticas principais */}
       <div className="row mb-4">
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-users text-primary fs-4"></i>
+                <div className="bg-primary bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-users text-primary fs-5 fs-md-4"></i>
                 </div>
-                <div className="flex-grow-1">
-                  <h3 className="fw-bold mb-0">{stats.totalUsuarios.toLocaleString()}</h3>
-                  <p className="text-muted mb-1 small">Total de Usuários</p>
-                  <small className="text-success">
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.totalUsuarios.toLocaleString()}</h4>
+                  <p className="text-muted mb-1 small text-truncate">Total de Usuários</p>
+                  <small className="text-success text-truncate d-block">
                     <i className="fas fa-arrow-up me-1"></i>
                     +{stats.novosUsuarios} este mês
                   </small>
@@ -177,17 +177,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-info bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-store text-info fs-4"></i>
+                <div className="bg-info bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-store text-info fs-5 fs-md-4"></i>
                 </div>
-                <div className="flex-grow-1">
-                  <h3 className="fw-bold mb-0">{stats.totalSaloes}</h3>
-                  <p className="text-muted mb-1 small">Salões Ativos</p>
-                  <small className="text-success">
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.totalSaloes}</h4>
+                  <p className="text-muted mb-1 small text-truncate">Salões Ativos</p>
+                  <small className="text-success text-truncate d-block">
                     <i className="fas fa-arrow-up me-1"></i>
                     +{stats.novosSaloes} este mês
                   </small>
@@ -197,17 +197,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-success bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-calendar-check text-success fs-4"></i>
+                <div className="bg-success bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-calendar-check text-success fs-5 fs-md-4"></i>
                 </div>
-                <div className="flex-grow-1">
-                  <h3 className="fw-bold mb-0">{stats.agendamentosHoje}</h3>
-                  <p className="text-muted mb-1 small">Agendamentos Hoje</p>
-                  <small className="text-info">
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{stats.agendamentosHoje}</h4>
+                  <p className="text-muted mb-1 small text-truncate">Agendamentos Hoje</p>
+                  <small className="text-info text-truncate d-block">
                     {stats.agendamentosMes.toLocaleString()} este mês
                   </small>
                 </div>
@@ -216,17 +216,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-3">
+        <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="d-flex align-items-center">
-                <div className="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
-                  <i className="fas fa-dollar-sign text-warning fs-4"></i>
+                <div className="bg-warning bg-opacity-10 rounded-circle p-2 p-md-3 me-2 me-md-3 flex-shrink-0">
+                  <i className="fas fa-dollar-sign text-warning fs-5 fs-md-4"></i>
                 </div>
-                <div className="flex-grow-1">
-                  <h3 className="fw-bold mb-0">{formatCurrency(stats.receitaTotal)}</h3>
-                  <p className="text-muted mb-1 small">Receita Total</p>
-                  <small className="text-success">
+                <div className="flex-grow-1 min-width-0">
+                  <h4 className="fw-bold mb-0 fs-5 fs-md-3">{formatCurrency(stats.receitaTotal)}</h4>
+                  <p className="text-muted mb-1 small text-truncate">Receita Total</p>
+                  <small className="text-success text-truncate d-block">
                     {formatCurrency(stats.receitaMes)} este mês
                   </small>
                 </div>
@@ -241,63 +241,64 @@ const AdminDashboard = () => {
         <div className="col-lg-8 mb-4">
           <div className="card border-0 shadow-sm">
             <div className="card-header bg-white border-0 py-3">
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                 <h5 className="fw-bold mb-0">
                   <i className="fas fa-chart-area me-2 text-primary"></i>
-                  Performance da Plataforma
+                  <span className="d-none d-sm-inline">Performance da Plataforma</span>
+                  <span className="d-sm-none">Performance</span>
                 </h5>
                 <div className="btn-group btn-group-sm">
-                  <button className="btn btn-outline-primary active">7 dias</button>
-                  <button className="btn btn-outline-primary">30 dias</button>
-                  <button className="btn btn-outline-primary">90 dias</button>
+                  <button className="btn btn-outline-primary active">7d</button>
+                  <button className="btn btn-outline-primary">30d</button>
+                  <button className="btn btn-outline-primary">90d</button>
                 </div>
               </div>
             </div>
             <div className="card-body">
               {/* Aqui você integraria um gráfico real como Chart.js */}
               <div className="row text-center">
-                <div className="col-md-3 mb-3">
-                  <div className="border rounded p-3">
-                    <i className="fas fa-users text-primary fs-2 mb-2"></i>
-                    <h6 className="fw-bold">Novos Usuários</h6>
-                    <div className="d-flex justify-content-center align-items-center">
-                      <span className="fs-4 fw-bold me-2">156</span>
+                <div className="col-lg-3 col-md-6 col-sm-6 mb-3">
+                  <div className="border rounded p-2 p-md-3">
+                    <i className="fas fa-users text-primary fs-3 fs-md-2 mb-2"></i>
+                    <h6 className="fw-bold small">Novos Usuários</h6>
+                    <div className="d-flex justify-content-center align-items-center flex-wrap">
+                      <span className="fs-5 fs-md-4 fw-bold me-2">156</span>
                       <small className="text-success">
                         <i className="fas fa-arrow-up"></i> 12%
                       </small>
                     </div>
                   </div>
                 </div>
-                <div className="col-md-3 mb-3">
-                  <div className="border rounded p-3">
-                    <i className="fas fa-calendar-check text-info fs-2 mb-2"></i>
-                    <h6 className="fw-bold">Agendamentos</h6>
-                    <div className="d-flex justify-content-center align-items-center">
-                      <span className="fs-4 fw-bold me-2">1,234</span>
+                <div className="col-lg-3 col-md-6 col-sm-6 mb-3">
+                  <div className="border rounded p-2 p-md-3">
+                    <i className="fas fa-calendar-check text-info fs-3 fs-md-2 mb-2"></i>
+                    <h6 className="fw-bold small">Agendamentos</h6>
+                    <div className="d-flex justify-content-center align-items-center flex-wrap">
+                      <span className="fs-5 fs-md-4 fw-bold me-2">1,234</span>
                       <small className="text-success">
                         <i className="fas fa-arrow-up"></i> 8%
                       </small>
                     </div>
                   </div>
                 </div>
-                <div className="col-md-3 mb-3">
-                  <div className="border rounded p-3">
-                    <i className="fas fa-dollar-sign text-success fs-2 mb-2"></i>
-                    <h6 className="fw-bold">Receita</h6>
-                    <div className="d-flex justify-content-center align-items-center">
-                      <span className="fs-4 fw-bold me-2">R$ 45K</span>
+                <div className="col-lg-3 col-md-6 col-sm-6 mb-3">
+                  <div className="border rounded p-2 p-md-3">
+                    <i className="fas fa-dollar-sign text-success fs-3 fs-md-2 mb-2"></i>
+                    <h6 className="fw-bold small">Receita</h6>
+                    <div className="d-flex justify-content-center align-items-center flex-wrap">
+                      <span className="fs-5 fs-md-4 fw-bold me-2">R$ 45K</span>
                       <small className="text-success">
                         <i className="fas fa-arrow-up"></i> 15%
                       </small>
                     </div>
                   </div>
                 </div>
-                <div className="col-md-3 mb-3">
-                  <div className="border rounded p-3">
-                    <i className="fas fa-star text-warning fs-2 mb-2"></i>
-                    <h6 className="fw-bold">Satisfação</h6>
-                    <div className="d-flex justify-content-center align-items-center">
-                      <span className="fs-4 fw-bold me-2">4.8</span>
+                <div className="col-lg-3 col-md-6 col-sm-6 mb-3">
+                  <div className="border rounded p-2 p-md-3">
+                    <i className="fas fa-star text-warning fs-3 fs-md-2 mb-2"></i>
+                    <h6 className="fw-bold small">Satisfação</h6>
+                    <div className="d-flex justify-content-center align-items-center flex-wrap">
+                      <span className="fs-5 fs-md-4 fw-bold me-2">4.8</span>
                       <small className="text-success">
                         <i className="fas fa-arrow-up"></i> 0.2
                       </small>
