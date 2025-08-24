@@ -780,7 +780,7 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
             card.innerHTML = `
-                <div class="card professional-card h-100" data-prof-id="${prof.id}" style="cursor: pointer;">
+                <div class="card profissional-card h-100" data-prof-id="${prof.id}" style="cursor: pointer;">
                     <div class="card-body text-center">
                         <i class="fas fa-user-tie text-primary mb-2" style="font-size: 2rem;"></i>
                         <h6 class="card-title">${prof.nome}</h6>
@@ -791,10 +791,10 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
             
             card.addEventListener('click', function() {
                 // Remover seleção anterior
-                document.querySelectorAll('.professional-card').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.profissional-card').forEach(c => c.classList.remove('selected'));
                 
                 // Selecionar atual
-                card.querySelector('.professional-card').classList.add('selected');
+                card.querySelector('.profissional-card').classList.add('selected');
                 modalSelectedProfessional = {
                     id: prof.id,
                     name: prof.nome
