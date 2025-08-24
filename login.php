@@ -1,68 +1,134 @@
 <?php
 /**
- * Página de Login
- * Autenticação de usuários do sistema
+ * Página de Login - CorteFácil
+ * Versão corrigida para produção - Proteção contra erro 500
+ * Corrigido em 2025-08-21
  */
 
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
-require_once __DIR__ . '/models/usuario.php';
+// Configurações de erro para produção
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
 
-// Se já está logado, redireciona
-if (isLoggedIn()) {
-    header('Location: index.php');
-    exit();
+// Iniciar sessão de forma segura
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
 }
 
-$erro = '';
-$sucesso = '';
-
-// Processar login
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitizeInput($_POST['email'] ?? '');
-    $senha = $_POST['senha'] ?? '';
+try {
+    // Incluir arquivos necessários de forma segura
+    $auth_file = __DIR__ . '/includes/auth.php';
+    $functions_file = __DIR__ . '/includes/functions.php';
+    $usuario_file = __DIR__ . '/models/usuario.php';
     
-    if (empty($email) || empty($senha)) {
-        $erro = 'Por favor, preencha todos os campos.';
-    } elseif (!validateEmail($email)) {
-        $erro = 'Digite um email válido.';
-    } else {
-        $usuario = new Usuario();
-        $dadosUsuario = $usuario->login($email, $senha);
-        
-        if ($dadosUsuario) {
-            login($dadosUsuario);
+    if (!file_exists($auth_file)) {
+        throw new Exception('Arquivo de autenticação não encontrado');
+    }
+    if (!file_exists($functions_file)) {
+        throw new Exception('Arquivo de funções não encontrado');
+    }
+    if (!file_exists($usuario_file)) {
+        throw new Exception('Arquivo de modelo de usuário não encontrado');
+    }
+    
+    require_once $auth_file;
+    require_once $functions_file;
+    require_once $usuario_file;
+    
+    // Se já está logado, redireciona
+    if (function_exists('isLoggedIn') && isLoggedIn()) {
+        header('Location: index.php');
+        exit();
+    }
+    
+    $erro = '';
+    $sucesso = '';
+
+    // Processar login com proteção contra erros
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $email = isset($_POST['email']) ? sanitizeInput($_POST['email']) : '';
+            $senha = isset($_POST['senha']) ? $_POST['senha'] : '';
             
-            // Redirecionar baseado no tipo de usuário
-            switch ($dadosUsuario['tipo_usuario']) {
-                case 'cliente':
-                    header('Location: cliente/dashboard.php');
-                    break;
-                case 'parceiro':
-                    header('Location: parceiro/dashboard.php');
-                    break;
-                case 'admin':
-                    header('Location: admin/dashboard.php');
-                    break;
-                default:
-                    header('Location: index.php');
-                    break;
+            if (empty($email) || empty($senha)) {
+                $erro = 'Por favor, preencha todos os campos.';
+            } elseif (!function_exists('validateEmail') || !validateEmail($email)) {
+                $erro = 'Digite um email válido.';
+            } else {
+                // Verificar se a classe Usuario existe
+                if (!class_exists('Usuario')) {
+                    throw new Exception('Classe Usuario não encontrada');
+                }
+                
+                $usuario = new Usuario();
+                $dadosUsuario = $usuario->login($email, $senha);
+                
+                // Verificar se retornou uma mensagem de erro de conexão
+                if (is_string($dadosUsuario)) {
+                    $erro = $dadosUsuario; // Mensagem amigável de erro de conexão
+                } elseif ($dadosUsuario && is_array($dadosUsuario)) {
+                    // Verificar se a função login existe
+                    if (!function_exists('login')) {
+                        throw new Exception('Função de login não encontrada');
+                    }
+                    
+                    login($dadosUsuario);
+                    
+                    // Redirecionar baseado no tipo de usuário
+                    $tipo_usuario = isset($dadosUsuario['tipo_usuario']) ? $dadosUsuario['tipo_usuario'] : 'cliente';
+                    
+                    switch ($tipo_usuario) {
+                        case 'cliente':
+                            header('Location: cliente/dashboard.php');
+                            break;
+                        case 'parceiro':
+                            header('Location: parceiro/dashboard.php');
+                            break;
+                        case 'admin':
+                            header('Location: admin/dashboard.php');
+                            break;
+                        default:
+                            header('Location: index.php');
+                            break;
+                    }
+                    exit();
+                } else {
+                    $erro = 'Email ou senha incorretos.';
+                }
             }
-            exit();
-        } else {
-            $erro = 'Email ou senha incorretos.';
+        } catch (Exception $e) {
+            error_log('Erro no login: ' . $e->getMessage());
+            $erro = 'Erro interno. Tente novamente.';
         }
     }
-}
 
-// Verificar mensagem flash
-$flash = getFlashMessage();
-if ($flash) {
-    if ($flash['type'] === 'success') {
-        $sucesso = $flash['message'];
-    } else {
-        $erro = $flash['message'];
+    // Verificar mensagem flash com proteção
+    if (function_exists('getFlashMessage')) {
+        $flash = getFlashMessage();
+        if ($flash && is_array($flash)) {
+            if (isset($flash['type']) && $flash['type'] === 'success' && isset($flash['message'])) {
+                $sucesso = $flash['message'];
+            } elseif (isset($flash['message'])) {
+                $erro = $flash['message'];
+            }
+        }
     }
+    
+} catch (Exception $e) {
+    // Log do erro e redirecionamento para página de erro
+    error_log('Erro crítico na página de login: ' . $e->getMessage());
+    
+    // Verificar se existe página de erro personalizada
+    $error_page = __DIR__ . '/erro_500_amigavel.php';
+    if (file_exists($error_page)) {
+        header('Location: erro_500_amigavel.php');
+        exit();
+    }
+    
+    // Fallback para erro genérico
+    http_response_code(500);
+    echo '<!DOCTYPE html><html><head><title>Erro</title></head><body><h1>Erro interno</h1><p>Tente novamente mais tarde.</p></body></html>';
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -72,7 +138,7 @@ if ($flash) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
 </head>
 <body class="bg-light">

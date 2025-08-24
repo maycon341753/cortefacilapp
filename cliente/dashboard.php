@@ -4,10 +4,10 @@
  * Painel principal para clientes agendarem serviços
  */
 
-require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/models/agendamento.php';
-require_once dirname(__DIR__) . '/models/salao.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
+require_once '../models/agendamento.php';
+require_once '../models/salao.php';
 
 // Verificar se é cliente
 requireCliente();
@@ -16,27 +16,67 @@ $usuario = getLoggedUser();
 $agendamento = new Agendamento();
 $salao = new Salao();
 
-// Buscar dados para o dashboard
-$agendamentos_recentes = $agendamento->listarPorCliente($usuario['id']);
-$saloes_disponiveis = $salao->listarAtivos();
+$erro = '';
+$sucesso = '';
 
-// Estatísticas
-$total_agendamentos = count($agendamentos_recentes);
-$agendamentos_pendentes = count(array_filter($agendamentos_recentes, function($a) {
-    return $a['status'] === 'pendente';
-}));
-$agendamentos_confirmados = count(array_filter($agendamentos_recentes, function($a) {
-    return $a['status'] === 'confirmado';
-}));
-
-// Próximo agendamento
-$proximo_agendamento = null;
-foreach ($agendamentos_recentes as $ag) {
-    if (($ag['status'] === 'confirmado' || $ag['status'] === 'pendente') && 
-        strtotime($ag['data'] . ' ' . $ag['hora']) > time()) {
-        $proximo_agendamento = $ag;
-        break;
+// Buscar dados para o dashboard com proteção
+try {
+    $agendamentos_recentes = [];
+    $saloes_disponiveis = [];
+    
+    if (method_exists($agendamento, 'listarPorCliente')) {
+        $agendamentos_recentes = $agendamento->listarPorCliente($usuario['id']) ?: [];
     }
+    
+    if (method_exists($salao, 'listarAtivos')) {
+        $saloes_disponiveis = $salao->listarAtivos() ?: [];
+    }
+    
+} catch (Exception $e) {
+    error_log("Erro ao buscar dados do dashboard: " . $e->getMessage());
+    $agendamentos_recentes = [];
+    $saloes_disponiveis = [];
+}
+
+// Calcular estatísticas com proteção
+try {
+    $total_agendamentos = is_array($agendamentos_recentes) ? count($agendamentos_recentes) : 0;
+    
+    $agendamentos_pendentes = 0;
+    $agendamentos_confirmados = 0;
+    
+    if (is_array($agendamentos_recentes)) {
+        foreach ($agendamentos_recentes as $a) {
+            if (isset($a['status'])) {
+                if ($a['status'] === 'pendente') $agendamentos_pendentes++;
+                if ($a['status'] === 'confirmado') $agendamentos_confirmados++;
+            }
+        }
+    }
+    
+} catch (Exception $e) {
+    error_log("Erro ao calcular estatísticas: " . $e->getMessage());
+    $total_agendamentos = 0;
+    $agendamentos_pendentes = 0;
+    $agendamentos_confirmados = 0;
+}
+
+// Buscar próximo agendamento com proteção
+$proximo_agendamento = null;
+try {
+    if (is_array($agendamentos_recentes)) {
+        foreach ($agendamentos_recentes as $ag) {
+            if (isset($ag['status'], $ag['data'], $ag['hora']) &&
+                ($ag['status'] === 'confirmado' || $ag['status'] === 'pendente') && 
+                strtotime($ag['data'] . ' ' . $ag['hora']) > time()) {
+                $proximo_agendamento = $ag;
+                break;
+            }
+        }
+    }
+} catch (Exception $e) {
+    error_log("Erro ao buscar próximo agendamento: " . $e->getMessage());
+    $proximo_agendamento = null;
 }
 ?>
 <!DOCTYPE html>
@@ -46,293 +86,255 @@ foreach ($agendamentos_recentes as $ag) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Cliente - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h5 class="text-white">
-                            <i class="fas fa-cut me-2"></i>
-                            CorteFácil
-                        </h5>
-                        <small class="text-white-50">Cliente</small>
-                    </div>
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="dashboard.php">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="agendar.php">
-                                <i class="fas fa-calendar-plus"></i>
-                                Novo Agendamento
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="agendamentos.php">
-                                <i class="fas fa-calendar-alt"></i>
-                                Meus Agendamentos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="saloes.php">
-                                <i class="fas fa-store"></i>
-                                Salões Parceiros
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="perfil.php">
-                                <i class="fas fa-user"></i>
-                                Meu Perfil
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    <hr class="text-white-50">
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="../logout.php">
-                                <i class="fas fa-sign-out-alt"></i>
-                                Sair
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-            
-            <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-outline-primary d-md-none me-3 sidebar-toggle" type="button">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1 class="h2 mb-0">
-                            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
-                            Dashboard
-                        </h1>
-                    </div>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <a href="agendar.php" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>
-                                Novo Agendamento
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Boas-vindas -->
-                <div class="alert alert-primary" role="alert">
-                    <h4 class="alert-heading">
-                        <i class="fas fa-hand-wave me-2"></i>
-                        Olá, <?php echo htmlspecialchars($usuario['nome']); ?>!
-                    </h4>
-                    <p class="mb-0">
-                        Bem-vindo ao seu painel. Aqui você pode agendar serviços, acompanhar seus agendamentos e muito mais.
-                    </p>
-                </div>
-                
-                <!-- Estatísticas -->
-                <div class="row mb-4">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="dashboard-card">
-                            <div class="icon">
-                                <i class="fas fa-calendar-check text-primary"></i>
-                            </div>
-                            <div class="number"><?php echo $total_agendamentos; ?></div>
-                            <div class="label">Total de Agendamentos</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="dashboard-card">
-                            <div class="icon">
-                                <i class="fas fa-clock text-warning"></i>
-                            </div>
-                            <div class="number"><?php echo $agendamentos_pendentes; ?></div>
-                            <div class="label">Pendentes</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="dashboard-card">
-                            <div class="icon">
-                                <i class="fas fa-check-circle text-success"></i>
-                            </div>
-                            <div class="number"><?php echo $agendamentos_confirmados; ?></div>
-                            <div class="label">Confirmados</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="dashboard-card">
-                            <div class="icon">
-                                <i class="fas fa-store text-info"></i>
-                            </div>
-                            <div class="number"><?php echo count($saloes_disponiveis); ?></div>
-                            <div class="label">Salões Disponíveis</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <!-- Próximo Agendamento -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-calendar-day me-2"></i>
-                                    Próximo Agendamento
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <?php if ($proximo_agendamento): ?>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                                                 style="width: 60px; height: 60px;">
-                                                <i class="fas fa-cut fa-lg"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1"><?php echo htmlspecialchars($proximo_agendamento['nome_salao']); ?></h6>
-                                            <p class="mb-1 text-muted">
-                                                <i class="fas fa-user me-1"></i>
-                                                <?php echo htmlspecialchars($proximo_agendamento['nome_profissional']); ?>
-                                            </p>
-                                            <p class="mb-1">
-                                                <i class="fas fa-calendar me-1"></i>
-                                                <?php echo formatarData($proximo_agendamento['data']); ?>
-                                                <i class="fas fa-clock ms-2 me-1"></i>
-                                                <?php echo formatarHora($proximo_agendamento['hora']); ?>
-                                            </p>
-                                            <span class="badge badge-<?php echo $proximo_agendamento['status'] === 'confirmado' ? 'success' : 'warning'; ?>">
-                                                <?php echo ucfirst($proximo_agendamento['status']); ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                                        <h6 class="text-muted">Nenhum agendamento próximo</h6>
-                                        <a href="agendar.php" class="btn btn-primary mt-2">
-                                            <i class="fas fa-plus me-2"></i>
-                                            Agendar Agora
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Agendamentos Recentes -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-history me-2"></i>
-                                    Agendamentos Recentes
-                                </h5>
-                                <a href="agendamentos.php" class="btn btn-sm btn-outline-primary">
-                                    Ver Todos
-                                </a>
-                            </div>
-                            <div class="card-body">
-                                <?php if (!empty($agendamentos_recentes)): ?>
-                                    <div class="list-group list-group-flush">
-                                        <?php foreach (array_slice($agendamentos_recentes, 0, 5) as $ag): ?>
-                                            <div class="list-group-item px-0">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div class="flex-grow-1">
-                                                        <h6 class="mb-1"><?php echo htmlspecialchars($ag['nome_salao']); ?></h6>
-                                                        <p class="mb-1 small text-muted">
-                                                            <?php echo htmlspecialchars($ag['nome_profissional']); ?> - 
-                                                            <?php echo formatarData($ag['data']); ?> às 
-                                                            <?php echo formatarHora($ag['hora']); ?>
-                                                        </p>
-                                                    </div>
-                                                    <div class="flex-shrink-0">
-                                                        <?php echo gerarBadgeStatus($ag['status']); ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
-                                        <h6 class="text-muted">Nenhum agendamento ainda</h6>
-                                        <p class="text-muted small">Faça seu primeiro agendamento!</p>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Salões em Destaque -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-star me-2"></i>
-                            Salões Parceiros
-                        </h5>
-                        <a href="saloes.php" class="btn btn-sm btn-outline-primary">
-                            Ver Todos
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-cut me-2"></i>CorteFácil
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.php">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agendar.php">
+                            <i class="fas fa-calendar-plus me-1"></i>Agendar
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agendamentos.php">
+                            <i class="fas fa-calendar-check me-1"></i>Meus Agendamentos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="saloes.php">
+                            <i class="fas fa-store me-1"></i>Salões
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($usuario['nome'] ?? 'Usuário'); ?>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="perfil.php"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="../logout.php"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard Cliente
+                    <small class="text-muted">Bem-vindo, <?php echo htmlspecialchars($usuario['nome'] ?? 'Usuário'); ?>!</small>
+                </h1>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo $total_agendamentos; ?></h4>
+                                <p class="mb-0">Total de Agendamentos</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-alt fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo $agendamentos_pendentes; ?></h4>
+                                <p class="mb-0">Pendentes</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo $agendamentos_confirmados; ?></h4>
+                                <p class="mb-0">Confirmados</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo count($saloes_disponiveis); ?></h4>
+                                <p class="mb-0">Salões Disponíveis</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-store fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Próximo Agendamento -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Próximo Agendamento</h5>
                     </div>
                     <div class="card-body">
-                        <?php if (!empty($saloes_disponiveis)): ?>
-                            <div class="row">
-                                <?php foreach (array_slice($saloes_disponiveis, 0, 6) as $s): ?>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="card h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-store me-2 text-primary"></i>
-                                                    <?php echo htmlspecialchars($s['nome']); ?>
-                                                </h6>
-                                                <p class="card-text small text-muted">
-                                                    <i class="fas fa-map-marker-alt me-1"></i>
-                                                    <?php echo limitarTexto(htmlspecialchars($s['endereco']), 50); ?>
-                                                </p>
-                                                <p class="card-text small text-muted">
-                                                    <i class="fas fa-phone me-1"></i>
-                                                    <?php echo formatTelefone($s['telefone']); ?>
-                                                </p>
-                                                <a href="agendar.php?salao=<?php echo $s['id']; ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-calendar-plus me-1"></i>
-                                                    Agendar
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
+                        <?php if ($proximo_agendamento): ?>
+                            <div class="alert alert-info">
+                                <h6><strong><?php echo htmlspecialchars($proximo_agendamento['servico'] ?? 'Serviço'); ?></strong></h6>
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <?php echo date('d/m/Y', strtotime($proximo_agendamento['data'])); ?>
+                                    <i class="fas fa-clock ms-3 me-1"></i>
+                                    <?php echo date('H:i', strtotime($proximo_agendamento['hora'])); ?>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-store me-1"></i>
+                                    <?php echo htmlspecialchars($proximo_agendamento['salao_nome'] ?? 'Salão'); ?>
+                                </p>
+                                <span class="badge bg-<?php echo $proximo_agendamento['status'] === 'confirmado' ? 'success' : 'warning'; ?>">
+                                    <?php echo ucfirst($proximo_agendamento['status']); ?>
+                                </span>
                             </div>
                         <?php else: ?>
                             <div class="text-center py-4">
-                                <i class="fas fa-store-slash fa-3x text-muted mb-3"></i>
-                                <h6 class="text-muted">Nenhum salão disponível no momento</h6>
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Nenhum agendamento próximo</p>
+                                <a href="agendar.php" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Agendar Serviço
+                                </a>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
-            </main>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Ações Rápidas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="agendar.php" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calendar-plus me-2"></i>Novo Agendamento
+                            </a>
+                            <a href="agendamentos.php" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-2"></i>Ver Meus Agendamentos
+                            </a>
+                            <a href="saloes.php" class="btn btn-outline-info">
+                                <i class="fas fa-search me-2"></i>Explorar Salões
+                            </a>
+                            <a href="perfil.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-user-edit me-2"></i>Editar Perfil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Agendamentos Recentes -->
+        <?php if (!empty($agendamentos_recentes)): ?>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Agendamentos Recentes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Serviço</th>
+                                        <th>Salão</th>
+                                        <th>Data</th>
+                                        <th>Hora</th>
+                                        <th>Status</th>
+                                        <th>Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($agendamentos_recentes, 0, 5) as $ag): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($ag['servico'] ?? 'N/A'); ?></td>
+                                        <td><?php echo htmlspecialchars($ag['salao_nome'] ?? 'N/A'); ?></td>
+                                        <td><?php echo isset($ag['data']) ? date('d/m/Y', strtotime($ag['data'])) : 'N/A'; ?></td>
+                                        <td><?php echo isset($ag['hora']) ? date('H:i', strtotime($ag['hora'])) : 'N/A'; ?></td>
+                                        <td>
+                                            <?php 
+                                            $status = $ag['status'] ?? 'indefinido';
+                                            $badge_class = [
+                                                'pendente' => 'warning',
+                                                'confirmado' => 'success',
+                                                'cancelado' => 'danger',
+                                                'concluido' => 'info'
+                                            ][$status] ?? 'secondary';
+                                            ?>
+                                            <span class="badge bg-<?php echo $badge_class; ?>">
+                                                <?php echo ucfirst($status); ?>
+                                            </span>
+                                        </td>
+                                        <td>R$ <?php echo number_format($ag['valor'] ?? 0, 2, ',', '.'); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="agendamentos.php" class="btn btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Ver Todos os Agendamentos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/main.js"></script>
 </body>
 </html>

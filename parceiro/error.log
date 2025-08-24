@@ -5,3 +5,15 @@
 [20-Aug-2025 16:18:33 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
 [20-Aug-2025 16:18:50 Europe/Berlin] Erro ao buscar salões do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
 [20-Aug-2025 16:28:43 Europe/Berlin] Erro ao buscar salão do parceiro: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'id_dono' in 'where clause'
+[21-Aug-2025 13:35:44 Europe/Berlin] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\parceiro\dashboard.php on line 16
+[21-Aug-2025 13:35:44 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:09:40 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:10:42 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:11:57 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:12:10 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:13:47 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:14:39 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:15:00 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:15:27 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:18:37 Europe/Berlin] Erro no dashboard parceiro: Arquivo crítico não encontrado: ../includes/auth.php
+[21-Aug-2025 14:19:25 Europe/Berlin] Conexão local estabelecida com sucesso

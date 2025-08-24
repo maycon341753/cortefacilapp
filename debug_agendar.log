@@ -1,0 +1,11 @@
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\diagnostico_agendar_cliente.php on line 19
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  Undefined global variable $_SESSION in C:\xampp\htdocs\cortefacil\cortefacilapp\diagnostico_agendar_cliente.php on line 27
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 228
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 229
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 230
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 233
+[23-Aug-2025 20:31:06 Europe/Berlin] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 236
+[23-Aug-2025 20:31:11 Europe/Berlin] Falha na conexão local: SQLSTATE[HY000] [2002] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente
+[23-Aug-2025 20:31:11 Europe/Berlin] CRÍTICO: Todas as tentativas de conexão falharam
+[23-Aug-2025 20:31:44 Europe/Berlin] Falha na conexão local: SQLSTATE[HY000] [2002] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente
+[23-Aug-2025 20:31:44 Europe/Berlin] CRÍTICO: Todas as tentativas de conexão falharam

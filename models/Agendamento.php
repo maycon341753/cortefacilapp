@@ -10,8 +10,12 @@ class Agendamento {
     private $conn;
     private $table = 'agendamentos';
     
-    public function __construct() {
-        $this->conn = getConnection();
+    public function __construct($conn = null) {
+        if ($conn !== null) {
+            $this->conn = $conn;
+        } else {
+            $this->conn = getConnection();
+        }
     }
     
     /**
@@ -84,6 +88,7 @@ class Agendamento {
      */
     public function listarHorariosOcupados($id_profissional, $data) {
         try {
+            // Primeiro tenta com a coluna status (para compatibilidade)
             $sql = "SELECT hora FROM {$this->table} 
                     WHERE id_profissional = :id_profissional 
                     AND data = :data 
@@ -97,6 +102,25 @@ class Agendamento {
             
             return $stmt->fetchAll(PDO::FETCH_COLUMN);
         } catch(PDOException $e) {
+            // Se falhar (coluna status não existe), tenta sem a coluna status
+            if (strpos($e->getMessage(), 'status') !== false) {
+                try {
+                    $sql = "SELECT hora FROM {$this->table} 
+                            WHERE id_profissional = :id_profissional 
+                            AND data = :data 
+                            ORDER BY hora";
+                    
+                    $stmt = $this->conn->prepare($sql);
+                    $stmt->bindParam(':id_profissional', $id_profissional);
+                    $stmt->bindParam(':data', $data);
+                    $stmt->execute();
+                    
+                    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+                } catch(PDOException $e2) {
+                    error_log("Erro ao listar horários ocupados (fallback): " . $e2->getMessage());
+                    return [];
+                }
+            }
             error_log("Erro ao listar horários ocupados: " . $e->getMessage());
             return [];
         }
@@ -662,26 +686,288 @@ class Agendamento {
      * @return array
      */
     public function gerarHorariosDisponiveis($id_profissional, $data) {
-        // Horários de funcionamento (8h às 18h, de hora em hora)
-        $horarios_funcionamento = [
-            '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
-            '14:00', '15:00', '16:00', '17:00', '18:00'
-        ];
+        try {
+            // Buscar o salão do profissional
+            try {
+                $sql_prof = "SELECT id_salao FROM profissionais WHERE id = :id_profissional AND status = 'ativo'";
+                $stmt_prof = $this->conn->prepare($sql_prof);
+                $stmt_prof->bindParam(':id_profissional', $id_profissional);
+                $stmt_prof->execute();
+                
+                $profissional = $stmt_prof->fetch(PDO::FETCH_ASSOC);
+            } catch(PDOException $e) {
+                // Se falhar (coluna status não existe), tenta sem a coluna status
+                if (strpos($e->getMessage(), 'status') !== false) {
+                    $sql_prof = "SELECT id_salao FROM profissionais WHERE id = :id_profissional";
+                    $stmt_prof = $this->conn->prepare($sql_prof);
+                    $stmt_prof->bindParam(':id_profissional', $id_profissional);
+                    $stmt_prof->execute();
+                    
+                    $profissional = $stmt_prof->fetch(PDO::FETCH_ASSOC);
+                } else {
+                    throw $e;
+                }
+            }
+            
+            if (!$profissional) {
+                error_log("Profissional não encontrado: {$id_profissional}");
+                return [];
+            }
+            
+            $id_salao = $profissional['id_salao'];
+            
+            // Determinar o dia da semana (1=Segunda, 2=Terça, ..., 6=Sábado, 0=Domingo)
+            $dia_semana = date('w', strtotime($data));
+            
+            // Buscar horários de funcionamento do salão para este dia
+            $sql_horarios = "SELECT hora_abertura, hora_fechamento 
+                           FROM horarios_funcionamento 
+                           WHERE id_salao = :id_salao AND dia_semana = :dia_semana AND ativo = 1";
+            
+            $stmt_horarios = $this->conn->prepare($sql_horarios);
+            $stmt_horarios->bindParam(':id_salao', $id_salao);
+            $stmt_horarios->bindParam(':dia_semana', $dia_semana);
+            $stmt_horarios->execute();
+            
+            $horario_funcionamento = $stmt_horarios->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$horario_funcionamento) {
+                // Se não há horário cadastrado para este dia, salão está fechado
+                error_log("Salão fechado no dia {$data} (dia da semana: {$dia_semana})");
+                return [];
+            }
+            
+            // Gerar horários disponíveis baseados no funcionamento do salão
+            $horarios_funcionamento = $this->gerarHorariosPorIntervalo(
+                $horario_funcionamento['hora_abertura'],
+                $horario_funcionamento['hora_fechamento'],
+                30 // Intervalo de 30 minutos
+            );
+            
+            $horarios_ocupados = $this->listarHorariosOcupados($id_profissional, $data);
+            
+            // Remove horários ocupados
+            $horarios_disponiveis = array_diff($horarios_funcionamento, $horarios_ocupados);
+            
+            // Remove horários passados se for hoje
+            if ($data == date('Y-m-d')) {
+                $hora_atual = date('H:i');
+                $horarios_disponiveis = array_filter($horarios_disponiveis, function($horario) use ($hora_atual) {
+                    return $horario > $hora_atual;
+                });
+            }
+            
+            return array_values($horarios_disponiveis);
+            
+        } catch (Exception $e) {
+            error_log("Erro ao gerar horários disponíveis: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Gera array de horários baseado no intervalo de funcionamento
+     * @param string $hora_inicio Formato HH:MM:SS
+     * @param string $hora_fim Formato HH:MM:SS
+     * @param int $intervalo_minutos Intervalo em minutos
+     * @return array
+     */
+    private function gerarHorariosPorIntervalo($hora_inicio, $hora_fim, $intervalo_minutos = 60) {
+        $horarios = [];
         
-        $horarios_ocupados = $this->listarHorariosOcupados($id_profissional, $data);
+        $inicio = new DateTime($hora_inicio);
+        $fim = new DateTime($hora_fim);
+        $intervalo = new DateInterval('PT' . $intervalo_minutos . 'M');
         
-        // Remove horários ocupados
-        $horarios_disponiveis = array_diff($horarios_funcionamento, $horarios_ocupados);
-        
-        // Remove horários passados se for hoje
-        if ($data == date('Y-m-d')) {
-            $hora_atual = date('H:i');
-            $horarios_disponiveis = array_filter($horarios_disponiveis, function($horario) use ($hora_atual) {
-                return $horario > $hora_atual;
-            });
+        while ($inicio < $fim) {
+            $horarios[] = $inicio->format('H:i');
+            $inicio->add($intervalo);
         }
         
-        return array_values($horarios_disponiveis);
+        return $horarios;
+    }
+    
+    /**
+     * Bloqueia temporariamente um horário para evitar conflitos
+     * @param int $id_profissional
+     * @param string $data
+     * @param string $hora
+     * @param string $session_id
+     * @param string $ip_cliente
+     * @param int $minutos_bloqueio
+     * @return bool
+     */
+    public function bloquearHorarioTemporariamente($id_profissional, $data, $hora, $session_id, $ip_cliente = null, $minutos_bloqueio = 10) {
+        try {
+            // Limpar bloqueios expirados primeiro
+            $this->limparBloqueiosExpirados();
+            
+            // Verificar se já existe um bloqueio para este horário
+            $sql_check = "SELECT session_id FROM bloqueios_temporarios 
+                         WHERE id_profissional = :id_profissional 
+                         AND data = :data 
+                         AND hora = :hora 
+                         AND expires_at > NOW()";
+            
+            $stmt_check = $this->conn->prepare($sql_check);
+            $stmt_check->bindParam(':id_profissional', $id_profissional);
+            $stmt_check->bindParam(':data', $data);
+            $stmt_check->bindParam(':hora', $hora);
+            $stmt_check->execute();
+            
+            $bloqueio_existente = $stmt_check->fetch(PDO::FETCH_ASSOC);
+            
+            // Se já existe um bloqueio de outra sessão, não pode bloquear
+            if ($bloqueio_existente && $bloqueio_existente['session_id'] !== $session_id) {
+                return false;
+            }
+            
+            // Se já existe um bloqueio da mesma sessão, atualizar tempo
+            if ($bloqueio_existente && $bloqueio_existente['session_id'] === $session_id) {
+                $sql_update = "UPDATE bloqueios_temporarios 
+                              SET expires_at = DATE_ADD(NOW(), INTERVAL :minutos MINUTE),
+                                  ip_cliente = :ip_cliente
+                              WHERE id_profissional = :id_profissional 
+                              AND data = :data 
+                              AND hora = :hora 
+                              AND session_id = :session_id";
+                
+                $stmt_update = $this->conn->prepare($sql_update);
+                $stmt_update->bindParam(':minutos', $minutos_bloqueio);
+                $stmt_update->bindParam(':ip_cliente', $ip_cliente);
+                $stmt_update->bindParam(':id_profissional', $id_profissional);
+                $stmt_update->bindParam(':data', $data);
+                $stmt_update->bindParam(':hora', $hora);
+                $stmt_update->bindParam(':session_id', $session_id);
+                
+                return $stmt_update->execute();
+            }
+            
+            // Criar novo bloqueio
+            $sql_insert = "INSERT INTO bloqueios_temporarios 
+                          (id_profissional, data, hora, session_id, ip_cliente, expires_at) 
+                          VALUES (:id_profissional, :data, :hora, :session_id, :ip_cliente, 
+                                  DATE_ADD(NOW(), INTERVAL :minutos MINUTE))";
+            
+            $stmt_insert = $this->conn->prepare($sql_insert);
+            $stmt_insert->bindParam(':id_profissional', $id_profissional);
+            $stmt_insert->bindParam(':data', $data);
+            $stmt_insert->bindParam(':hora', $hora);
+            $stmt_insert->bindParam(':session_id', $session_id);
+            $stmt_insert->bindParam(':ip_cliente', $ip_cliente);
+            $stmt_insert->bindParam(':minutos', $minutos_bloqueio);
+            
+            return $stmt_insert->execute();
+            
+        } catch (PDOException $e) {
+            error_log("Erro ao bloquear horário temporariamente: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Remove bloqueio temporário de um horário
+     * @param int $id_profissional
+     * @param string $data
+     * @param string $hora
+     * @param string $session_id
+     * @return bool
+     */
+    public function desbloquearHorario($id_profissional, $data, $hora, $session_id) {
+        try {
+            $sql = "DELETE FROM bloqueios_temporarios 
+                   WHERE id_profissional = :id_profissional 
+                   AND data = :data 
+                   AND hora = :hora 
+                   AND session_id = :session_id";
+            
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id_profissional', $id_profissional);
+            $stmt->bindParam(':data', $data);
+            $stmt->bindParam(':hora', $hora);
+            $stmt->bindParam(':session_id', $session_id);
+            
+            return $stmt->execute();
+            
+        } catch (PDOException $e) {
+            error_log("Erro ao desbloquear horário: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Lista horários bloqueados temporariamente
+     * @param int $id_profissional
+     * @param string $data
+     * @param string $session_id_atual
+     * @return array
+     */
+    public function listarHorariosBloqueados($id_profissional, $data, $session_id_atual = null) {
+        try {
+            // Limpar bloqueios expirados primeiro
+            $this->limparBloqueiosExpirados();
+            
+            $sql = "SELECT hora, session_id FROM bloqueios_temporarios 
+                   WHERE id_profissional = :id_profissional 
+                   AND data = :data 
+                   AND expires_at > NOW()";
+            
+            if ($session_id_atual) {
+                $sql .= " AND session_id != :session_id_atual";
+            }
+            
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id_profissional', $id_profissional);
+            $stmt->bindParam(':data', $data);
+            
+            if ($session_id_atual) {
+                $stmt->bindParam(':session_id_atual', $session_id_atual);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+        } catch (PDOException $e) {
+            error_log("Erro ao listar horários bloqueados: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Remove bloqueios expirados
+     * @return bool
+     */
+    public function limparBloqueiosExpirados() {
+        try {
+            $sql = "DELETE FROM bloqueios_temporarios WHERE expires_at <= NOW()";
+            $stmt = $this->conn->prepare($sql);
+            return $stmt->execute();
+            
+        } catch (PDOException $e) {
+            error_log("Erro ao limpar bloqueios expirados: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Gera horários disponíveis considerando bloqueios temporários
+     * @param int $id_profissional
+     * @param string $data
+     * @param string $session_id_atual
+     * @return array
+     */
+    public function gerarHorariosDisponiveisComBloqueios($id_profissional, $data, $session_id_atual = null) {
+        // Obter horários disponíveis normalmente
+        $horarios_disponiveis = $this->gerarHorariosDisponiveis($id_profissional, $data);
+        
+        // Obter horários bloqueados por outras sessões
+        $horarios_bloqueados = $this->listarHorariosBloqueados($id_profissional, $data, $session_id_atual);
+        
+        // Remover horários bloqueados dos disponíveis
+        $horarios_finais = array_diff($horarios_disponiveis, $horarios_bloqueados);
+        
+        return array_values($horarios_finais);
     }
 }
 ?>

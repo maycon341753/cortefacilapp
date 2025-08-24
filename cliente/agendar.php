@@ -93,8 +93,135 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novo Agendamento - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
+    <style>
+        /* Ocultar campos hidden do CSRF token */
+        input[type="hidden"][name="csrf_token"] {
+            display: none !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }
+
+        /* Estilos do Modal de Agendamento */
+        .modal-step {
+            min-height: 300px;
+        }
+
+        .profissional-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .profissional-card:hover {
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .profissional-card.selected {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+
+        /* Calendário */
+        .calendar-widget {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .calendar-day:hover {
+            background-color: #e9ecef;
+        }
+
+        .calendar-day.disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+            background-color: #f8f9fa;
+        }
+
+        .calendar-day.selected {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .calendar-day.today {
+            background-color: #ffc107;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-weight: bold;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            font-size: 0.75rem;
+        }
+
+        /* Grid de Horários */
+        .horarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .horario-slot {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: white;
+        }
+
+        .horario-slot:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+
+        .horario-slot.selected {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .horario-slot.disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -196,156 +323,91 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                     </div>
                 <?php endif; ?>
                 
-                <!-- Formulário de Agendamento -->
+                <!-- Formulário oculto para submissão -->
+                <form id="formAgendamento" method="POST" style="display: none;">
+                    <input type="hidden" id="id_salao" name="id_salao">
+                    <input type="hidden" id="id_profissional" name="id_profissional">
+                    <input type="hidden" id="data" name="data">
+                    <input type="hidden" id="hora" name="hora">
+                </form>
+                
+                <!-- Área de Seleção de Salões -->
                 <div class="row">
                     <div class="col-lg-8">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0">
-                                    <i class="fas fa-calendar-plus me-2"></i>
-                                    Agendar Serviço
+                                    <i class="fas fa-store me-2"></i>
+                                    Escolha o Salão para Agendar
                                 </h5>
                             </div>
                             <div class="card-body">
-                                <form method="POST" id="formAgendamento">
-                                    <?php echo generateCsrfToken(); ?>
-                                    
-                                    <!-- Etapa 1: Escolher Salão -->
-                                    <div class="step-section" id="step1">
-                                        <h6 class="mb-3">
-                                            <span class="badge bg-primary me-2">1</span>
-                                            Escolha o Salão
-                                        </h6>
-                                        
-                                        <div class="mb-3">
-                                            <label for="id_salao" class="form-label">Salão *</label>
-                                            <select class="form-select" id="id_salao" name="id_salao" required>
-                                                <option value="">Selecione um salão...</option>
-                                                <?php foreach ($saloes_disponiveis as $s): ?>
-                                                    <option value="<?php echo $s['id']; ?>" 
-                                                            <?php echo ($salao_selecionado == $s['id']) ? 'selected' : ''; ?>
-                                                            data-endereco="<?php echo htmlspecialchars($s['endereco']); ?>"
-                                                            data-telefone="<?php echo htmlspecialchars($s['telefone']); ?>">
-                                                        <?php echo htmlspecialchars($s['nome']); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <div class="form-text">Escolha o salão onde deseja ser atendido.</div>
-                                        </div>
-                                        
-                                        <!-- Informações do Salão Selecionado -->
-                                        <div id="infoSalao" class="alert alert-info" style="display: none;">
-                                            <h6><i class="fas fa-info-circle me-2"></i>Informações do Salão</h6>
-                                            <p class="mb-1"><strong>Endereço:</strong> <span id="salaoEndereco"></span></p>
-                                            <p class="mb-0"><strong>Telefone:</strong> <span id="salaoTelefone"></span></p>
-                                        </div>
-                                    </div>
-                                    
-                                    <hr>
-                                    
-                                    <!-- Etapa 2: Escolher Profissional -->
-                                    <div class="step-section" id="step2" style="display: none;">
-                                        <h6 class="mb-3">
-                                            <span class="badge bg-primary me-2">2</span>
-                                            Escolha o Profissional
-                                        </h6>
-                                        
-                                        <div class="mb-3">
-                                            <label for="id_profissional" class="form-label">Profissional *</label>
-                                            <select class="form-select" id="id_profissional" name="id_profissional" required>
-                                                <option value="">Primeiro selecione um salão...</option>
-                                            </select>
-                                            <div class="form-text">Escolha o profissional que irá atendê-lo.</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <hr>
-                                    
-                                    <!-- Etapa 3: Escolher Data e Horário -->
-                                    <div class="step-section" id="step3" style="display: none;">
-                                        <h6 class="mb-3">
-                                            <span class="badge bg-primary me-2">3</span>
-                                            Escolha Data e Horário
-                                        </h6>
-                                        
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="data" class="form-label">Data *</label>
-                                                    <input type="date" class="form-control" id="data" name="data" 
-                                                           min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" required>
-                                                    <div class="form-text">Selecione a data desejada.</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="hora" class="form-label">Horário *</label>
-                                                    <select class="form-select" id="hora" name="hora" required>
-                                                        <option value="">Primeiro selecione uma data...</option>
-                                                    </select>
-                                                    <div class="form-text">Escolha um horário disponível.</div>
+                                <div class="row g-3" id="saloesGrid">
+                                    <?php foreach ($saloes_disponiveis as $s): ?>
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="card salon-card h-100" 
+                                                 data-salon-id="<?php echo $s['id']; ?>"
+                                                 data-endereco="<?php echo htmlspecialchars($s['endereco']); ?>"
+                                                 data-telefone="<?php echo htmlspecialchars($s['telefone']); ?>"
+                                                 style="cursor: pointer; transition: all 0.3s ease;">
+                                                <div class="card-body d-flex flex-column">
+                                                    <div class="d-flex align-items-start mb-2">
+                                                        <div class="salon-icon me-3">
+                                                            <i class="fas fa-cut text-primary" style="font-size: 2rem;"></i>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <h5 class="card-title mb-1 text-truncate"><?php echo htmlspecialchars($s['nome']); ?></h5>
+                                                            <p class="text-muted mb-1 small">
+                                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                                <?php echo htmlspecialchars($s['cidade'] ?? 'Cidade não informada'); ?>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <p class="text-muted small mb-1">
+                                                            <i class="fas fa-calendar-check me-1"></i>
+                                                            <?php echo ($s['total_agendamentos'] ?? 0); ?> agendamentos realizados
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3 flex-grow-1">
+                                                        <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.2;">
+                                                            <i class="fas fa-location-dot me-1"></i>
+                                                            <?php 
+                                                                $endereco_completo = trim($s['endereco']);
+                                                                if (!empty($s['bairro'])) {
+                                                                    $endereco_completo .= ', ' . trim($s['bairro']);
+                                                                }
+                                                                if (!empty($s['cidade'])) {
+                                                                    $endereco_completo .= ', ' . trim($s['cidade']);
+                                                                }
+                                                                if (!empty($s['cep'])) {
+                                                                    $endereco_completo .= ' - ' . trim($s['cep']);
+                                                                }
+                                                                echo htmlspecialchars($endereco_completo);
+                                                            ?>
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <div class="mt-auto">
+                                                        <button type="button" class="btn btn-primary btn-sm w-100 agendar-btn" data-salao-id="<?php echo $s['id']; ?>">
+                                                            <i class="fas fa-calendar-plus me-1"></i>
+                                                            Agendar Aqui
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                                        <!-- Horários Disponíveis -->
-                                        <div id="horariosDisponiveis" class="mb-3" style="display: none;">
-                                            <label class="form-label">Horários Disponíveis</label>
-                                            <div id="gridHorarios" class="time-slots-grid">
-                                                <!-- Horários serão carregados via JavaScript -->
-                                            </div>
-                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                
+                                <?php if (empty($saloes_disponiveis)): ?>
+                                    <div class="alert alert-warning text-center">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Nenhum salão disponível no momento.
                                     </div>
-                                    
-                                    <hr>
-                                    
-                                    <!-- Resumo do Agendamento -->
-                                    <div class="step-section" id="resumo" style="display: none;">
-                                        <h6 class="mb-3">
-                                            <span class="badge bg-success me-2">4</span>
-                                            Confirmar Agendamento
-                                        </h6>
-                                        
-                                        <div class="alert alert-light border">
-                                            <h6><i class="fas fa-clipboard-check me-2"></i>Resumo do Agendamento</h6>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <p class="mb-1"><strong>Salão:</strong> <span id="resumoSalao">-</span></p>
-                                                    <p class="mb-1"><strong>Profissional:</strong> <span id="resumoProfissional">-</span></p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <p class="mb-1"><strong>Data:</strong> <span id="resumoData">-</span></p>
-                                                    <p class="mb-1"><strong>Horário:</strong> <span id="resumoHora">-</span></p>
-                                                </div>
-                                            </div>
-                                            <hr>
-                                            <p class="mb-0">
-                                                <strong>Taxa da Plataforma:</strong> 
-                                                <span class="text-success fw-bold">R$ 1,29</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Botões -->
-                                    <div class="d-flex justify-content-between">
-                                        <button type="button" class="btn btn-secondary" id="btnVoltar" style="display: none;">
-                                            <i class="fas fa-arrow-left me-2"></i>
-                                            Voltar
-                                        </button>
-                                        
-                                        <div class="ms-auto">
-                                            <button type="button" class="btn btn-primary" id="btnProximo">
-                                                Próximo
-                                                <i class="fas fa-arrow-right ms-2"></i>
-                                            </button>
-                                            
-                                            <button type="submit" class="btn btn-success" id="btnConfirmar" style="display: none;">
-                                                <i class="fas fa-check me-2"></i>
-                                                Confirmar Agendamento
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -421,204 +483,730 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
             </div>
         </div>
     </div>
+
+    <!-- Modal de Agendamento -->
+    <div class="modal fade" id="agendamentoModal" tabindex="-1" aria-labelledby="agendamentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="agendamentoModalLabel">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Agendar Serviço
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 33%" id="modalProgressBar"></div>
+                    </div>
+
+                    <!-- Etapa 1: Seleção de Profissional -->
+                    <div class="modal-step" id="modalStep1">
+                        <h6 class="mb-3">
+                            <span class="badge bg-primary me-2">1</span>
+                            Escolha o Profissional
+                        </h6>
+                        <div class="row g-3" id="profissionaisGrid">
+                            <!-- Profissionais serão carregados aqui -->
+                        </div>
+                        <div class="text-center mt-3" id="loadingProfissionais" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <span class="ms-2">Carregando profissionais...</span>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 2: Seleção de Data -->
+                    <div class="modal-step" id="modalStep2" style="display: none;">
+                        <h6 class="mb-3">
+                            <span class="badge bg-primary me-2">2</span>
+                            Escolha a Data
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="calendar-widget" id="calendarWidget">
+                                    <!-- Calendário será gerado aqui -->
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="selected-date-info">
+                                    <h6>Data Selecionada:</h6>
+                                    <div class="alert alert-light" id="selectedDateDisplay">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        Selecione uma data
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3: Seleção de Horário -->
+                    <div class="modal-step" id="modalStep3" style="display: none;">
+                        <h6 class="mb-3">
+                            <span class="badge bg-primary me-2">3</span>
+                            Escolha o Horário
+                        </h6>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="horarios-grid" id="modalHorariosGrid">
+                                    <!-- Horários serão carregados aqui -->
+                                </div>
+                                <div class="text-center mt-3" id="loadingHorarios" style="display: none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                    <span class="ms-2">Carregando horários...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumo Final -->
+                    <div class="modal-step" id="modalStep4" style="display: none;">
+                        <h6 class="mb-3">
+                            <span class="badge bg-success me-2">4</span>
+                            Confirmar Agendamento
+                        </h6>
+                        <div class="alert alert-light border">
+                            <h6><i class="fas fa-clipboard-check me-2"></i>Resumo do Agendamento</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Salão:</strong> <span id="modalResumoSalao">-</span></p>
+                                    <p class="mb-1"><strong>Profissional:</strong> <span id="modalResumoProfissional">-</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Data:</strong> <span id="modalResumoData">-</span></p>
+                                    <p class="mb-1"><strong>Horário:</strong> <span id="modalResumoHora">-</span></p>
+                                </div>
+                            </div>
+                            <hr>
+                            <p class="mb-0">
+                                <strong>Taxa da Plataforma:</strong> 
+                                <span class="text-success fw-bold">R$ 1,29</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="modalBtnVoltar" style="display: none;">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="modalBtnProximo">
+                        Próximo
+                        <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-success" id="modalBtnConfirmar" style="display: none;">
+                        <i class="fas fa-check me-2"></i>
+                        Confirmar Agendamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
     <script>
-        // Controle de etapas do formulário
-        let currentStep = 1;
-        const totalSteps = 4;
+        // ===== MODAL DE AGENDAMENTO =====
+        let modalCurrentStep = 1;
+        let modalSelectedSalon = null;
+        let modalSelectedProfessional = null;
+        let modalSelectedDate = null;
+        let modalSelectedTime = null;
+
+        // Elementos do modal
+        let agendamentoModal;
         
-        // Elementos
-        const btnProximo = document.getElementById('btnProximo');
-        const btnVoltar = document.getElementById('btnVoltar');
-        const btnConfirmar = document.getElementById('btnConfirmar');
-        
-        // Inicializar
         document.addEventListener('DOMContentLoaded', function() {
-            // Se já tem salão selecionado, carregar profissionais
-            const salaoSelect = document.getElementById('id_salao');
-            if (salaoSelect.value) {
-                carregarProfissionais(salaoSelect.value);
-                mostrarInfoSalao();
-                showStep(2);
-                currentStep = 2;
-            }
+            // Inicializar modal
+            agendamentoModal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
             
-            // Event listeners
-            salaoSelect.addEventListener('change', function() {
-                if (this.value) {
-                    carregarProfissionais(this.value);
-                    mostrarInfoSalao();
-                    if (currentStep === 1) {
-                        showStep(2);
-                        currentStep = 2;
+            // Inicializar botões do modal
+            const modalBtnProximo = document.getElementById('modalBtnProximo');
+            const modalBtnVoltar = document.getElementById('modalBtnVoltar');
+            const modalBtnConfirmar = document.getElementById('modalBtnConfirmar');
+            
+            // Event listeners para botões do modal
+            modalBtnProximo.addEventListener('click', nextModalStep);
+            modalBtnVoltar.addEventListener('click', prevModalStep);
+            modalBtnConfirmar.addEventListener('click', confirmarAgendamentoModal);
+            
+            // Event listeners para botões "Agendar Aqui"
+            document.querySelectorAll('.agendar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const salaoId = this.dataset.salaoId;
+                    const salaoCard = this.closest('.salon-card');
+                    
+                    modalSelectedSalon = {
+                        id: salaoId,
+                        nome: salaoCard.querySelector('.card-title').textContent,
+                        endereco: salaoCard.dataset.endereco
+                    };
+                    
+                    resetModal();
+                    carregarProfissionaisModal(salaoId);
+                    agendamentoModal.show();
+                });
+            });
+            
+            // Event listeners dos botões do modal
+            document.getElementById('modalBtnVoltar').addEventListener('click', function() {
+                if (modalCurrentStep > 1) {
+                    modalCurrentStep--;
+                    mostrarEtapaModal(modalCurrentStep);
+                    atualizarProgressoModal();
+                }
+            });
+            
+            document.getElementById('modalBtnProximo').addEventListener('click', function() {
+                if (modalCurrentStep < 4) {
+                    modalCurrentStep++;
+                    mostrarEtapaModal(modalCurrentStep);
+                    atualizarProgressoModal();
+                    
+                    if (modalCurrentStep === 2) {
+                        gerarCalendario();
+                    } else if (modalCurrentStep === 3 && modalSelectedDate) {
+                        carregarHorariosModal();
+                    } else if (modalCurrentStep === 4) {
+                        atualizarResumoModal();
                     }
-                } else {
-                    document.getElementById('id_profissional').innerHTML = '<option value="">Primeiro selecione um salão...</option>';
-                    document.getElementById('infoSalao').style.display = 'none';
-                    hideStepsAfter(1);
-                    currentStep = 1;
-                }
-                updateButtons();
-            });
-            
-            document.getElementById('id_profissional').addEventListener('change', function() {
-                if (this.value && currentStep === 2) {
-                    showStep(3);
-                    currentStep = 3;
-                } else if (!this.value) {
-                    hideStepsAfter(2);
-                    currentStep = 2;
-                }
-                updateButtons();
-            });
-            
-            document.getElementById('data').addEventListener('change', function() {
-                if (this.value) {
-                    carregarHorarios();
                 }
             });
             
-            document.getElementById('hora').addEventListener('change', function() {
-                if (this.value && currentStep === 3) {
-                    atualizarResumo();
-                    showStep(4);
-                    currentStep = 4;
-                } else if (!this.value) {
-                    hideStepsAfter(3);
-                    currentStep = 3;
-                }
-                updateButtons();
+            document.getElementById('modalBtnConfirmar').addEventListener('click', function() {
+                confirmarAgendamentoModal();
             });
-            
-            btnProximo.addEventListener('click', nextStep);
-            btnVoltar.addEventListener('click', prevStep);
         });
         
-        function showStep(step) {
-            document.getElementById('step' + step).style.display = 'block';
-            if (step === 4) {
-                document.getElementById('resumo').style.display = 'block';
-            }
-        }
-        
-        function hideStepsAfter(step) {
-            for (let i = step + 1; i <= totalSteps; i++) {
-                if (i === 4) {
-                    document.getElementById('resumo').style.display = 'none';
-                } else {
-                    document.getElementById('step' + i).style.display = 'none';
-                }
-            }
-        }
-        
-        function updateButtons() {
-            btnVoltar.style.display = currentStep > 1 ? 'inline-block' : 'none';
-            btnProximo.style.display = currentStep < totalSteps ? 'inline-block' : 'none';
-            btnConfirmar.style.display = currentStep === totalSteps ? 'inline-block' : 'none';
-        }
-        
-        function nextStep() {
-            if (validateCurrentStep()) {
-                if (currentStep < totalSteps) {
-                    currentStep++;
-                    showStep(currentStep);
-                    if (currentStep === 4) {
-                        atualizarResumo();
-                    }
-                    updateButtons();
-                }
-            }
-        }
-        
-        function prevStep() {
-            if (currentStep > 1) {
-                currentStep--;
-                hideStepsAfter(currentStep);
-                updateButtons();
-            }
-        }
-        
-        function validateCurrentStep() {
-            switch (currentStep) {
-                case 1:
-                    return document.getElementById('id_salao').value !== '';
-                case 2:
-                    return document.getElementById('id_profissional').value !== '';
-                case 3:
-                    return document.getElementById('data').value !== '' && document.getElementById('hora').value !== '';
-                default:
-                    return true;
-            }
-        }
-        
-        function mostrarInfoSalao() {
-            const select = document.getElementById('id_salao');
-            const option = select.options[select.selectedIndex];
+        function resetModal() {
+            modalCurrentStep = 1;
+            modalSelectedProfessional = null;
+            modalSelectedDate = null;
+            modalSelectedTime = null;
             
-            if (option.value) {
-                document.getElementById('salaoEndereco').textContent = option.dataset.endereco;
-                document.getElementById('salaoTelefone').textContent = option.dataset.telefone;
-                document.getElementById('infoSalao').style.display = 'block';
-            }
+            mostrarEtapaModal(1);
+            atualizarProgressoModal();
         }
         
-        function carregarProfissionais(idSalao) {
-            const select = document.getElementById('id_profissional');
-            select.innerHTML = '<option value="">Carregando...</option>';
+        function atualizarProgressoModal() {
+            const progress = (modalCurrentStep / 4) * 100;
+            document.getElementById('modalProgressBar').style.width = progress + '%';
+        }
+        
+        function mostrarEtapaModal(step) {
+            // Esconder todas as etapas
+            document.querySelectorAll('.modal-step').forEach(s => s.style.display = 'none');
             
-            CorteFacil.ajax.get(`../api/profissionais.php?salao=${idSalao}`)
+            // Mostrar etapa atual
+            document.getElementById(`modalStep${step}`).style.display = 'block';
+            
+            // Atualizar botões
+            document.getElementById('modalBtnVoltar').style.display = step > 1 ? 'inline-block' : 'none';
+            document.getElementById('modalBtnProximo').style.display = step < 4 ? 'inline-block' : 'none';
+            document.getElementById('modalBtnConfirmar').style.display = step === 4 ? 'inline-block' : 'none';
+        }
+        
+        function carregarProfissionaisModal(salaoId) {
+            const container = document.getElementById('profissionaisGrid');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+            
+            fetch(`../api/profissionais.php?salao_id=${salaoId}`)
+                .then(response => response.json())
                 .then(data => {
-                    select.innerHTML = '<option value="">Selecione um profissional...</option>';
-                    data.forEach(prof => {
-                        const option = document.createElement('option');
-                        option.value = prof.id;
-                        option.textContent = `${prof.nome} - ${prof.especialidade}`;
-                        select.appendChild(option);
-                    });
+                    if (data.success && data.profissionais.length > 0) {
+                        container.innerHTML = '';
+                        data.profissionais.forEach(prof => {
+                            const card = criarCardProfissional(prof);
+                            container.appendChild(card);
+                        });
+                    } else {
+                        container.innerHTML = '<div class="alert alert-warning">Nenhum profissional disponível.</div>';
+                    }
                 })
                 .catch(error => {
-                    console.error('Erro ao carregar profissionais:', error);
-                    select.innerHTML = '<option value="">Erro ao carregar profissionais</option>';
+                    container.innerHTML = '<div class="alert alert-danger">Erro ao carregar profissionais.</div>';
                 });
         }
         
-        function carregarHorarios() {
-            const idProfissional = document.getElementById('id_profissional').value;
-            const data = document.getElementById('data').value;
+        function criarCardProfissional(prof) {
+            const card = document.createElement('div');
+            card.className = 'col-md-6 mb-3';
+            card.innerHTML = `
+                <div class="card professional-card h-100" data-prof-id="${prof.id}" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-tie text-primary mb-2" style="font-size: 2rem;"></i>
+                        <h6 class="card-title">${prof.nome}</h6>
+                        <p class="card-text small text-muted">${prof.especialidade || 'Profissional'}</p>
+                    </div>
+                </div>
+            `;
             
-            if (!idProfissional || !data) return;
+            card.addEventListener('click', function() {
+                // Remover seleção anterior
+                document.querySelectorAll('.professional-card').forEach(c => c.classList.remove('selected'));
+                
+                // Selecionar atual
+                card.querySelector('.professional-card').classList.add('selected');
+                modalSelectedProfessional = prof;
+            });
             
-            const select = document.getElementById('hora');
-            select.innerHTML = '<option value="">Carregando...</option>';
+            return card;
+        }
+        
+        function gerarCalendario() {
+            const calendarWidget = document.getElementById('calendarWidget');
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
             
-            CorteFacil.ajax.get(`../api/horarios.php?profissional=${idProfissional}&data=${data}`)
-                .then(horarios => {
-                    select.innerHTML = '<option value="">Selecione um horário...</option>';
-                    horarios.forEach(hora => {
-                        const option = document.createElement('option');
-                        option.value = hora;
-                        option.textContent = hora;
-                        select.appendChild(option);
+            const monthNames = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            
+            const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            
+            let html = `
+                <div class="calendar-header">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h6 class="mb-0" id="monthYear">${monthNames[currentMonth]} ${currentYear}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid">
+            `;
+            
+            // Cabeçalho dos dias da semana
+            weekdays.forEach(day => {
+                html += `<div class="calendar-weekday">${day}</div>`;
+            });
+            
+            // Gerar dias do mês
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Dias vazios do início
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day disabled"></div>';
+            }
+            
+            // Dias do mês
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = date.toDateString() === today.toDateString();
+                const isPast = date < today;
+                
+                let classes = 'calendar-day';
+                if (isPast) classes += ' disabled';
+                if (isToday) classes += ' today';
+                
+                html += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
+            }
+            
+            html += '</div>';
+            calendarWidget.innerHTML = html;
+            
+            // Event listeners para os dias
+            calendarWidget.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calendar-day') && !e.target.classList.contains('disabled')) {
+                    // Remover seleção anterior
+                    calendarWidget.querySelectorAll('.calendar-day').forEach(day => {
+                        day.classList.remove('selected');
                     });
+                    
+                    // Selecionar dia atual
+                    e.target.classList.add('selected');
+                    modalSelectedDate = e.target.dataset.date;
+                    
+                    // Atualizar display da data selecionada
+                    document.getElementById('selectedDateDisplay').innerHTML = `
+                        <i class="fas fa-calendar me-2"></i>
+                        ${formatDateBR(modalSelectedDate)}
+                    `;
+                }
+            });
+        }
+
+        function carregarHorariosModal() {
+            console.log('carregarHorariosModal() chamada');
+            const grid = document.getElementById('modalHorariosGrid');
+            const loading = document.getElementById('loadingHorarios');
+            
+            console.log('Elementos encontrados:', { grid, loading });
+            console.log('Dados selecionados:', { 
+                profissional: modalSelectedProfessional, 
+                salao: modalSelectedSalon, 
+                data: modalSelectedDate 
+            });
+            
+            if (!modalSelectedProfessional || !modalSelectedDate) {
+                console.log('Dados incompletos - mostrando aviso');
+                grid.innerHTML = '<div class="alert alert-warning">Selecione um profissional e uma data primeiro.</div>';
+                return;
+            }
+            
+            loading.style.display = 'block';
+            grid.innerHTML = '';
+            
+            const url = `../api/horarios.php?profissional_id=${modalSelectedProfessional.id}&salao_id=${modalSelectedSalon.id}&data=${modalSelectedDate}`;
+            console.log('Fazendo requisição para:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Resposta recebida:', response.status, response.statusText);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dados recebidos:', data);
+                    loading.style.display = 'none';
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        console.log('Criando', data.data.length, 'slots de horário');
+                        data.data.forEach(horario => {
+                            const slot = document.createElement('div');
+                            slot.className = 'horario-slot';
+                            slot.textContent = horario;
+                            slot.dataset.hora = horario;
+                            
+                            slot.addEventListener('click', function() {
+                                // Remover seleção anterior
+                                grid.querySelectorAll('.horario-slot').forEach(s => {
+                                    s.classList.remove('selected');
+                                });
+                                
+                                // Selecionar atual
+                                slot.classList.add('selected');
+                                modalSelectedTime = horario;
+                                console.log('Horário selecionado:', horario);
+                            });
+                            
+                            grid.appendChild(slot);
+                        });
+                        console.log('Slots criados com sucesso');
+                    } else {
+                        console.log('Nenhum horário disponível');
+                        grid.innerHTML = '<div class="alert alert-warning">Nenhum horário disponível para esta data.</div>';
+                    }
                 })
                 .catch(error => {
                     console.error('Erro ao carregar horários:', error);
-                    select.innerHTML = '<option value="">Erro ao carregar horários</option>';
+                    loading.style.display = 'none';
+                    grid.innerHTML = '<div class="alert alert-danger">Erro ao carregar horários.</div>';
                 });
         }
         
-        function atualizarResumo() {
-            const salaoSelect = document.getElementById('id_salao');
-            const profissionalSelect = document.getElementById('id_profissional');
-            const data = document.getElementById('data').value;
-            const hora = document.getElementById('hora').value;
+        function atualizarResumoModal() {
+            const resumoSalao = document.getElementById('modalResumoSalao');
+            const resumoProfissional = document.getElementById('modalResumoProfissional');
+            const resumoData = document.getElementById('modalResumoData');
+            const resumoHora = document.getElementById('modalResumoHora');
             
-            document.getElementById('resumoSalao').textContent = salaoSelect.options[salaoSelect.selectedIndex].text;
-            document.getElementById('resumoProfissional').textContent = profissionalSelect.options[profissionalSelect.selectedIndex].text;
-            document.getElementById('resumoData').textContent = CorteFacil.formatDate(data);
-            document.getElementById('resumoHora').textContent = hora;
+            if (resumoSalao && modalSelectedSalon) {
+                resumoSalao.textContent = modalSelectedSalon.name || '-';
+            }
+            
+            if (resumoProfissional && modalSelectedProfessional) {
+                resumoProfissional.textContent = modalSelectedProfessional.name || '-';
+            }
+            
+            if (resumoData && modalSelectedDate) {
+                resumoData.textContent = formatDateBR(modalSelectedDate);
+            }
+            
+            if (resumoHora && modalSelectedTime) {
+                resumoHora.textContent = modalSelectedTime;
+            }
+        }
+
+
+
+        // Conectar botões "Agendar Aqui" ao modal
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.salon-select-btn')) {
+                e.preventDefault();
+                const salonCard = e.target.closest('.salon-card');
+                const salonId = salonCard.dataset.salonId;
+                const salonName = salonCard.querySelector('h5').textContent;
+                
+                modalSelectedSalon = {
+                    id: salonId,
+                    name: salonName
+                };
+                
+                // Resetar modal
+                resetModal();
+                
+                // Carregar profissionais
+                carregarProfissionaisModal(salonId);
+                
+                // Abrir modal
+                agendamentoModal.show();
+            }
+        });
+
+        function resetModal() {
+            modalCurrentStep = 1;
+            modalSelectedProfessional = null;
+            modalSelectedDate = null;
+            modalSelectedTime = null;
+            
+            // Mostrar apenas primeira etapa
+            document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
+            document.getElementById('modalStep1').style.display = 'block';
+            
+            // Resetar botões
+            modalBtnVoltar.style.display = 'none';
+            modalBtnProximo.style.display = 'inline-block';
+            modalBtnConfirmar.style.display = 'none';
+            
+            // Resetar progress bar
+            updateModalProgress();
+        }
+
+        function updateModalProgress() {
+            const progress = (modalCurrentStep / 4) * 100;
+            modalProgressBar.style.width = progress + '%';
+        }
+
+        function nextModalStep() {
+            if (modalCurrentStep === 1 && !modalSelectedProfessional) {
+                alert('Por favor, selecione um profissional.');
+                return;
+            }
+            
+            if (modalCurrentStep === 2 && !modalSelectedDate) {
+                alert('Por favor, selecione uma data.');
+                return;
+            }
+            
+            if (modalCurrentStep === 3 && !modalSelectedTime) {
+                alert('Por favor, selecione um horário.');
+                return;
+            }
+            
+            modalCurrentStep++;
+            
+            if (modalCurrentStep === 2) {
+                showModalStep2();
+            } else if (modalCurrentStep === 3) {
+                showModalStep3();
+            } else if (modalCurrentStep === 4) {
+                showModalStep4();
+            }
+            
+            updateModalButtons();
+            updateModalProgress();
+        }
+
+        function prevModalStep() {
+            modalCurrentStep--;
+            
+            document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
+            document.getElementById('modalStep' + modalCurrentStep).style.display = 'block';
+            
+            updateModalButtons();
+            updateModalProgress();
+        }
+
+        function updateModalButtons() {
+            modalBtnVoltar.style.display = modalCurrentStep > 1 ? 'inline-block' : 'none';
+            modalBtnProximo.style.display = modalCurrentStep < 4 ? 'inline-block' : 'none';
+            modalBtnConfirmar.style.display = modalCurrentStep === 4 ? 'inline-block' : 'none';
+        }
+
+        function carregarProfissionaisModal(salonId) {
+            const grid = document.getElementById('profissionaisGrid');
+            const loading = document.getElementById('loadingProfissionais');
+            
+            loading.style.display = 'block';
+            grid.innerHTML = '';
+            
+            fetch('../api/profissionais.php?salao_id=' + salonId)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    
+                    if (data.success && data.profissionais.length > 0) {
+                        data.profissionais.forEach(prof => {
+                            const card = createProfissionalCard(prof);
+                            grid.appendChild(card);
+                        });
+                    } else {
+                        grid.innerHTML = '<div class="col-12"><div class="alert alert-warning">Nenhum profissional disponível neste salão.</div></div>';
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    grid.innerHTML = '<div class="col-12"><div class="alert alert-danger">Erro ao carregar profissionais.</div></div>';
+                });
+        }
+
+        function createProfissionalCard(prof) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6';
+            
+            col.innerHTML = `
+                <div class="card profissional-card h-100" data-prof-id="${prof.id}" data-prof-name="${prof.nome}">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-tie text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6 class="card-title">${prof.nome}</h6>
+                        <p class="text-muted small mb-0">${prof.especialidade || 'Profissional'}</p>
+                    </div>
+                </div>
+            `;
+            
+            col.addEventListener('click', function() {
+                // Remover seleção anterior
+                document.querySelectorAll('.profissional-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Selecionar atual
+                col.querySelector('.profissional-card').classList.add('selected');
+                
+                modalSelectedProfessional = {
+                    id: prof.id,
+                    name: prof.nome
+                };
+            });
+            
+            return col;
+        }
+
+        function showModalStep2() {
+            document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
+            document.getElementById('modalStep2').style.display = 'block';
+            
+            generateCalendar();
+        }
+
+        function showModalStep3() {
+            document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
+            document.getElementById('modalStep3').style.display = 'block';
+            
+            carregarHorariosModal();
+        }
+
+        function showModalStep4() {
+            document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
+            document.getElementById('modalStep4').style.display = 'block';
+            
+            // Atualizar resumo
+            atualizarResumoModal();
+        }
+
+        function generateCalendar() {
+            const calendarWidget = document.getElementById('calendarWidget');
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            const monthNames = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            
+            const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            
+            let html = `
+                <div class="calendar-header">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h6 class="mb-0" id="monthYear">${monthNames[currentMonth]} ${currentYear}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid">
+            `;
+            
+            // Cabeçalho dos dias da semana
+            weekdays.forEach(day => {
+                html += `<div class="calendar-weekday">${day}</div>`;
+            });
+            
+            // Gerar dias do mês
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Dias vazios do início
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day disabled"></div>';
+            }
+            
+            // Dias do mês
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = date.toDateString() === today.toDateString();
+                const isPast = date < today;
+                
+                let classes = 'calendar-day';
+                if (isPast) classes += ' disabled';
+                if (isToday) classes += ' today';
+                
+                html += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
+            }
+            
+            html += '</div>';
+            calendarWidget.innerHTML = html;
+            
+            // Event listeners para os dias
+            calendarWidget.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calendar-day') && !e.target.classList.contains('disabled')) {
+                    // Remover seleção anterior
+                    calendarWidget.querySelectorAll('.calendar-day').forEach(day => {
+                        day.classList.remove('selected');
+                    });
+                    
+                    // Selecionar dia atual
+                    e.target.classList.add('selected');
+                    modalSelectedDate = e.target.dataset.date;
+                    
+                    // Atualizar display da data selecionada
+                    document.getElementById('selectedDateDisplay').innerHTML = `
+                        <i class="fas fa-calendar me-2"></i>
+                        ${formatDateBR(modalSelectedDate)}
+                    `;
+                }
+            });
+        }
+
+
+
+        function confirmarAgendamentoModal() {
+            // Preencher formulário principal com os dados selecionados
+            document.getElementById('id_salao').value = modalSelectedSalon.id;
+            document.getElementById('id_profissional').value = modalSelectedProfessional.id;
+            document.getElementById('data').value = modalSelectedDate;
+            document.getElementById('hora').value = modalSelectedTime;
+            
+            // Fechar modal
+            agendamentoModal.hide();
+            
+            // Submeter formulário
+            document.getElementById('formAgendamento').submit();
+        }
+
+        function formatDateBR(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         }
     </script>
 </body>

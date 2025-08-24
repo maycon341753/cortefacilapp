@@ -3,17 +3,19 @@
  * Configuração do banco de dados
  * Arquivo de configuração para conexão com MySQL
  * Detecta automaticamente o ambiente (local vs online)
- * VERSÃO ATUALIZADA - Agosto 2025
+ * VERSÃO CORRIGIDA - Agosto 2025
  */
 
 class Database {
+    private static $instance = null;
+    private static $connection = null;
     private $host;
     private $db_name;
     private $username;
     private $password;
     private $conn;
     
-    public function __construct() {
+    private function __construct() {
         // Detectar ambiente automaticamente
         if ($this->isLocalEnvironment()) {
             // Configurações para ambiente local
@@ -32,55 +34,144 @@ class Database {
     }
     
     /**
+     * Implementação do padrão Singleton
+     * @return Database
+     */
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    /**
      * Detecta se está rodando em ambiente local
      * @return bool
      */
     private function isLocalEnvironment() {
-        // Verificar múltiplas condições para ambiente local
-        $localHosts = ['localhost', '127.0.0.1', '::1'];
-        $serverName = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? 'localhost';
+        // 0. PRIORIDADE ABSOLUTA: Verificar arquivo .env.online
+        if (file_exists(__DIR__ . '/../.env.online')) {
+            return false; // FORÇAR ONLINE
+        }
         
-        // 1. Verifica se está rodando localmente por hostname
+        // 1. PRIORIDADE MÁXIMA: Verificar se está sendo acessado via domínio online
+        $serverName = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? '';
+        
+        // Se está sendo acessado via cortefacil.app, é SEMPRE online
+        if (strpos($serverName, 'cortefacil.app') !== false) {
+            return false; // FORÇAR ONLINE
+        }
+        
+        // 1.1. VERIFICAÇÃO ADICIONAL: Se está sendo executado via web e não é localhost
+        if (!empty($serverName) && !in_array($serverName, ['localhost', '127.0.0.1', '::1'])) {
+            // Se tem um domínio real (não localhost), provavelmente é online
+            return false;
+        }
+        
+        // 2. Verificar se está sendo executado via CLI (linha de comando)
+        if (php_sapi_name() === 'cli') {
+            // No CLI, verificar se existe arquivo indicador de ambiente
+            if (file_exists(__DIR__ . '/../.env.online')) {
+                return false; // Arquivo indica ambiente online
+            }
+            // Por padrão, CLI é considerado local para desenvolvimento
+            return true;
+        }
+        
+        // 3. Verificar hosts locais tradicionais
+        $localHosts = ['localhost', '127.0.0.1', '::1'];
         if (in_array($serverName, $localHosts)) {
             return true;
         }
         
-        // 2. Verifica se está rodando no XAMPP/WAMP
+        // 4. Verificar se está rodando no XAMPP/WAMP
         if (strpos($_SERVER['DOCUMENT_ROOT'] ?? '', 'xampp') !== false || 
             strpos($_SERVER['DOCUMENT_ROOT'] ?? '', 'wamp') !== false) {
             return true;
         }
         
-        // 3. Verifica se está usando servidor PHP built-in (php -S)
+        // 5. Verificar se está usando servidor PHP built-in (php -S)
         if (isset($_SERVER['SERVER_SOFTWARE']) && 
             strpos($_SERVER['SERVER_SOFTWARE'], 'PHP') !== false) {
             return true;
         }
         
-        // 4. Verifica porta de desenvolvimento
+        // 6. Verificar porta de desenvolvimento
         $port = $_SERVER['SERVER_PORT'] ?? 80;
         if (in_array($port, [8000, 8080, 3000, 4000, 5000])) {
             return true;
         }
         
-        // 5. Verifica se não tem HTTPS (desenvolvimento local geralmente não usa)
-        if (!isset($_SERVER['HTTPS']) && $serverName === 'localhost') {
-            return true;
-        }
-        
+        // 7. Se chegou até aqui e não é nenhum caso local, é online
         return false;
     }
     
     /**
-     * Conecta ao banco de dados MySQL
+     * Conecta ao banco de dados MySQL usando Singleton com fallback automático
      * @return PDO|null
      */
     public function connect() {
-        $this->conn = null;
+        // Se já existe uma conexão singleton, reutilizar
+        if (self::$connection !== null) {
+            return self::$connection;
+        }
         
+        // Tentar conexão com fallback automático
+        return $this->connectWithFallback();
+    }
+    
+    /**
+     * Conecta com fallback automático: tenta online primeiro, depois local
+     * @return PDO|null
+     */
+    private function connectWithFallback() {
+        $originalIsLocal = $this->isLocalEnvironment();
+        
+        // Se não é ambiente local, tentar conexão online primeiro
+        if (!$originalIsLocal) {
+            if ($this->tryConnection('online')) {
+                return self::$connection;
+            }
+            
+            // Se falhou online, tentar local como fallback
+            error_log('Fallback: Tentando conexão local após falha online');
+            if ($this->tryConnection('local')) {
+                return self::$connection;
+            }
+        } else {
+            // Se é ambiente local, tentar local primeiro
+            if ($this->tryConnection('local')) {
+                return self::$connection;
+            }
+        }
+        
+        // Se chegou aqui, ambas as conexões falharam
+        $this->handleConnectionFailure();
+        return null;
+    }
+    
+    /**
+     * Tenta estabelecer conexão com configuração específica
+     * @param string $type 'online' ou 'local'
+     * @return bool
+     */
+    private function tryConnection($type) {
         try {
-            // String de conexão DSN melhorada
-            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4";
+            // Configurar credenciais baseado no tipo
+            if ($type === 'online') {
+                $host = 'srv486.hstgr.io';
+                $db_name = 'u690889028_cortefacil';
+                $username = 'u690889028_mayconwender';
+                $password = 'Maycon341753';
+            } else {
+                $host = 'localhost';
+                $db_name = 'u690889028_cortefacil';
+                $username = 'root';
+                $password = '';
+            }
+            
+            // String de conexão DSN
+            $dsn = "mysql:host={$host};dbname={$db_name};charset=utf8mb4";
             
             // Opções de conexão otimizadas
             $options = array(
@@ -89,154 +180,103 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
-                PDO::ATTR_PERSISTENT => false
+                PDO::ATTR_PERSISTENT => false,
+                PDO::ATTR_TIMEOUT => ($type === 'online' ? 10 : 5), // Timeout menor para fallback
+                PDO::MYSQL_ATTR_FOUND_ROWS => true
             );
             
             // Estabelecer conexão
-            $this->conn = new PDO($dsn, $this->username, $this->password, $options);
+            self::$connection = new PDO($dsn, $username, $password, $options);
+            $this->conn = self::$connection;
             
-            // Configurações adicionais de charset para garantir UTF-8
-            $this->conn->exec("SET NAMES utf8mb4");
-            $this->conn->exec("SET CHARACTER SET utf8mb4");
-            $this->conn->exec("SET character_set_connection=utf8mb4");
-            $this->conn->exec("SET collation_connection=utf8mb4_unicode_ci");
+            // Configurações de charset
+            self::$connection->exec("SET NAMES utf8mb4");
+            self::$connection->exec("SET CHARACTER SET utf8mb4");
+            self::$connection->exec("SET character_set_connection=utf8mb4");
+            self::$connection->exec("SET collation_connection=utf8mb4_unicode_ci");
+            
+            // Atualizar propriedades da instância
+            $this->host = $host;
+            $this->db_name = $db_name;
+            $this->username = $username;
+            $this->password = $password;
+            
+            // Log de sucesso
+            error_log("Conexão {$type} estabelecida com sucesso");
+            
+            return true;
             
         } catch(PDOException $e) {
-            // Log do erro para análise
-            error_log("Erro de conexão BD: " . $e->getMessage());
-            
-            // Exibir erro baseado no ambiente
-            if ($this->isLocalEnvironment()) {
-                // Em desenvolvimento, mostrar erro detalhado
-                echo "<div style='background:#ffebee;border:1px solid #f44336;padding:15px;margin:10px;border-radius:4px;'>";
-                echo "<h3 style='color:#d32f2f;margin:0 0 10px 0;'>🚨 Erro de Conexão com o Banco</h3>";
-                echo "<strong>Mensagem:</strong> " . $e->getMessage() . "<br>";
-                echo "<strong>Código:</strong> " . $e->getCode() . "<br>";
-                echo "<strong>Host:</strong> " . $this->host . "<br>";
-                echo "<strong>Database:</strong> " . $this->db_name . "<br>";
-                echo "<strong>Username:</strong> " . $this->username . "<br>";
-                echo "<strong>Ambiente:</strong> " . ($this->isLocalEnvironment() ? "Local" : "Online");
-                echo "</div>";
-            } else {
-                // Em produção, erro mais genérico
-                echo "<div style='background:#ffebee;padding:15px;margin:10px;border-radius:4px;text-align:center;'>";
-                echo "<h3 style='color:#d32f2f;'>⚠️ Erro de Conexão</h3>";
-                echo "<p>Não foi possível conectar ao banco de dados. Tente novamente em alguns minutos.</p>";
-                echo "<small>Se o problema persistir, entre em contato com o suporte.</small>";
-                echo "</div>";
-            }
+            // Log do erro sem exibir para o usuário
+            error_log("Falha na conexão {$type}: " . $e->getMessage());
+            return false;
         }
+    }
+    
+    /**
+     * Trata falha de conexão de forma amigável
+     */
+    private function handleConnectionFailure() {
+        // Log do erro crítico
+        error_log('CRÍTICO: Todas as tentativas de conexão falharam');
         
-        return $this->conn;
+        // Não exibir erro diretamente - será tratado pela aplicação
+        // A aplicação deve verificar se a conexão é null e tratar adequadamente
     }
     
     /**
-     * Fecha a conexão com o banco
+     * Fecha a conexão singleton (usar com cuidado)
      */
-    public function disconnect() {
-        $this->conn = null;
+    public static function closeConnection() {
+        self::$connection = null;
     }
     
     /**
-     * Verifica se a conexão está ativa
-     * @return bool
-     */
-    public function isConnected() {
-        return $this->conn !== null;
-    }
-    
-    /**
-     * Obtém informações da conexão atual
+     * Retorna informações de debug (apenas em ambiente local)
      * @return array
      */
-    public function getConnectionInfo() {
+    public function getDebugInfo() {
+        if (!$this->isLocalEnvironment()) {
+            return ['error' => 'Debug info only available in local environment'];
+        }
+        
         return [
             'host' => $this->host,
             'database' => $this->db_name,
             'username' => $this->username,
-            'environment' => $this->isLocalEnvironment() ? 'local' : 'production',
-            'connected' => $this->isConnected()
+            'password_set' => !empty($this->password),
+            'environment' => $this->isLocalEnvironment() ? 'local' : 'online',
+            'server_name' => $_SERVER['SERVER_NAME'] ?? 'not set',
+            'http_host' => $_SERVER['HTTP_HOST'] ?? 'not set',
+            'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'not set'
         ];
     }
     
     /**
-     * Método para testar conexão (apenas para debug - remover em produção)
-     * @return void
+     * Força o uso de configurações online (para testes)
      */
-    public function testConnection() {
-        echo "<div style='background:#f5f5f5;padding:20px;margin:20px;border-radius:8px;font-family:Arial,sans-serif;'>";
-        echo "<h2 style='color:#333;margin:0 0 15px 0;'>🔍 Teste de Conexão - CorteFácil</h2>";
-        
-        $info = $this->getConnectionInfo();
-        echo "<div style='background:white;padding:15px;border-radius:4px;margin-bottom:15px;'>";
-        echo "<h3 style='margin:0 0 10px 0;color:#666;'>📋 Informações da Conexão</h3>";
-        echo "<strong>Host:</strong> " . $info['host'] . "<br>";
-        echo "<strong>Database:</strong> " . $info['database'] . "<br>";
-        echo "<strong>Username:</strong> " . $info['username'] . "<br>";
-        echo "<strong>Password:</strong> " . str_repeat("*", strlen($this->password)) . "<br>";
-        echo "<strong>Ambiente:</strong> " . ucfirst($info['environment']) . "<br>";
-        echo "</div>";
-        
-        echo "<div style='background:white;padding:15px;border-radius:4px;'>";
-        echo "<h3 style='margin:0 0 10px 0;color:#666;'>🧪 Resultado do Teste</h3>";
-        
-        $startTime = microtime(true);
-        $conn = $this->connect();
-        $endTime = microtime(true);
-        $duration = round(($endTime - $startTime) * 1000, 2);
-        
-        if ($conn) {
-            echo "<div style='color:#4caf50;font-size:18px;font-weight:bold;margin-bottom:10px;'>";
-            echo "✅ CONEXÃO BEM-SUCEDIDA!";
-            echo "</div>";
-            echo "<p style='margin:5px 0;'>⏱️ Tempo de conexão: {$duration}ms</p>";
-            
-            try {
-                // Testar uma query simples
-                $stmt = $conn->query("SELECT VERSION() as version, NOW() as current_time");
-                $result = $stmt->fetch();
-                echo "<p style='margin:5px 0;'>🗄️ Versão MySQL: " . $result['version'] . "</p>";
-                echo "<p style='margin:5px 0;'>🕐 Hora do servidor: " . $result['current_time'] . "</p>";
-            } catch(Exception $e) {
-                echo "<p style='color:#ff9800;'>⚠️ Conexão OK, mas erro ao executar query: " . $e->getMessage() . "</p>";
-            }
-            
-            $this->disconnect();
-            echo "<p style='color:#4caf50;margin:10px 0 0 0;'>🔌 Conexão fechada com sucesso!</p>";
-        } else {
-            echo "<div style='color:#f44336;font-size:18px;font-weight:bold;'>";
-            echo "❌ FALHA NA CONEXÃO";
-            echo "</div>";
-        }
-        echo "</div>";
-        echo "</div>";
+    public function forceOnlineConfig() {
+        $this->host = 'srv486.hstgr.io';
+        $this->db_name = 'u690889028_cortefacil';
+        $this->username = 'u690889028_mayconwender';
+        $this->password = 'Maycon341753';
     }
 }
 
 /**
- * Função auxiliar para obter conexão com o banco
+ * Função auxiliar para obter conexão usando Singleton (compatibilidade)
  * @return PDO|null
  */
 function getConnection() {
-    $database = new Database();
-    return $database->connect();
+    $db = Database::getInstance();
+    return $db->connect();
 }
 
 /**
- * Função auxiliar para testar conexão rapidamente
- * @return bool
+ * Função auxiliar para obter instância singleton da classe Database
+ * @return Database
  */
-function testDatabaseConnection() {
-    $database = new Database();
-    $conn = $database->connect();
-    $isConnected = $conn !== null;
-    $database->disconnect();
-    return $isConnected;
+function getDatabaseInstance() {
+    return Database::getInstance();
 }
-
-// 🧪 CÓDIGO DE TESTE (REMOVER EM PRODUÇÃO)
-// Descomente a linha abaixo para testar a conexão:
-// $db = new Database();
-// $db->testConnection();
-
 ?>

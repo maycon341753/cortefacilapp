@@ -1,114 +1,119 @@
 <?php
 /**
  * Script para corrigir a estrutura da tabela saloes
- * Adiciona a coluna id_dono se ela não existir
+ * Adiciona colunas separadas para bairro, cidade e CEP
  */
 
-require_once 'config/database.php';
+// Ativar exibição de erros
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once __DIR__ . '/config/database.php';
 
 try {
     $conn = getConnection();
     
-    // Verificar se a coluna id_dono existe
-    $stmt = $conn->query("SHOW COLUMNS FROM saloes LIKE 'id_dono'");
-    $coluna_existe = $stmt->rowCount() > 0;
+    echo "<h2>Correção da Estrutura da Tabela 'saloes'</h2>";
     
-    if (!$coluna_existe) {
-        echo "<h2>Corrigindo estrutura da tabela saloes...</h2>";
-        
-        // Adicionar a coluna id_dono
-        $sql = "ALTER TABLE saloes ADD COLUMN id_dono INT NOT NULL AFTER id";
-        $conn->exec($sql);
-        echo "<p>✓ Coluna id_dono adicionada com sucesso!</p>";
-        
-        // Adicionar a chave estrangeira
-        $sql = "ALTER TABLE saloes ADD FOREIGN KEY (id_dono) REFERENCES usuarios(id) ON DELETE CASCADE";
-        $conn->exec($sql);
-        echo "<p>✓ Chave estrangeira adicionada com sucesso!</p>";
-        
-        // Verificar se existem usuários e salões para associar
-        $stmt = $conn->query("SELECT COUNT(*) as total FROM usuarios WHERE tipo = 'parceiro'");
-        $parceiros = $stmt->fetch()['total'];
-        
-        $stmt = $conn->query("SELECT COUNT(*) as total FROM saloes");
-        $saloes = $stmt->fetch()['total'];
-        
-        if ($parceiros > 0 && $saloes > 0) {
-            // Associar salões existentes ao primeiro parceiro encontrado
-            $stmt = $conn->query("SELECT id FROM usuarios WHERE tipo = 'parceiro' LIMIT 1");
-            $primeiro_parceiro = $stmt->fetch()['id'];
-            
-            $sql = "UPDATE saloes SET id_dono = :id_dono WHERE id_dono = 0";
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':id_dono', $primeiro_parceiro);
-            $stmt->execute();
-            
-            echo "<p>✓ Salões existentes associados ao parceiro ID: {$primeiro_parceiro}</p>";
-        }
-        
-        echo "<h3>Estrutura corrigida com sucesso!</h3>";
-        
-    } else {
-        echo "<h2>Estrutura da tabela saloes</h2>";
-        echo "<p>✓ A coluna id_dono já existe na tabela saloes.</p>";
-    }
-    
-    // Mostrar estrutura atual da tabela
-    echo "<h3>Estrutura atual da tabela saloes:</h3>";
-    $stmt = $conn->query("DESCRIBE saloes");
+    // Verificar se as colunas já existem
+    echo "<h3>1. Verificando estrutura atual...</h3>";
+    $stmt = $conn->prepare("DESCRIBE saloes");
+    $stmt->execute();
     $colunas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    echo "<table border='1' style='border-collapse: collapse; margin: 10px 0;'>";
-    echo "<tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Chave</th><th>Padrão</th><th>Extra</th></tr>";
+    $tem_bairro = false;
+    $tem_cidade = false;
+    $tem_cep = false;
+    
     foreach ($colunas as $coluna) {
-        echo "<tr>";
-        echo "<td>{$coluna['Field']}</td>";
-        echo "<td>{$coluna['Type']}</td>";
-        echo "<td>{$coluna['Null']}</td>";
-        echo "<td>{$coluna['Key']}</td>";
-        echo "<td>{$coluna['Default']}</td>";
-        echo "<td>{$coluna['Extra']}</td>";
+        if ($coluna['Field'] === 'bairro') $tem_bairro = true;
+        if ($coluna['Field'] === 'cidade') $tem_cidade = true;
+        if ($coluna['Field'] === 'cep') $tem_cep = true;
+    }
+    
+    echo "<ul>";
+    echo "<li>Coluna 'bairro': " . ($tem_bairro ? "<span style='color: green;'>JÁ EXISTE</span>" : "<span style='color: red;'>NÃO EXISTE</span>") . "</li>";
+    echo "<li>Coluna 'cidade': " . ($tem_cidade ? "<span style='color: green;'>JÁ EXISTE</span>" : "<span style='color: red;'>NÃO EXISTE</span>") . "</li>";
+    echo "<li>Coluna 'cep': " . ($tem_cep ? "<span style='color: green;'>JÁ EXISTE</span>" : "<span style='color: red;'>NÃO EXISTE</span>") . "</li>";
+    echo "</ul>";
+    
+    // Adicionar colunas se não existirem
+    $alteracoes_feitas = [];
+    
+    if (!$tem_bairro) {
+        echo "<h3>2. Adicionando coluna 'bairro'...</h3>";
+        $sql = "ALTER TABLE saloes ADD COLUMN bairro VARCHAR(100) NULL AFTER endereco";
+        $conn->exec($sql);
+        echo "<p style='color: green;'>✅ Coluna 'bairro' adicionada com sucesso!</p>";
+        $alteracoes_feitas[] = 'bairro';
+    }
+    
+    if (!$tem_cidade) {
+        echo "<h3>3. Adicionando coluna 'cidade'...</h3>";
+        $sql = "ALTER TABLE saloes ADD COLUMN cidade VARCHAR(100) NULL AFTER " . ($tem_bairro ? 'bairro' : 'endereco');
+        $conn->exec($sql);
+        echo "<p style='color: green;'>✅ Coluna 'cidade' adicionada com sucesso!</p>";
+        $alteracoes_feitas[] = 'cidade';
+    }
+    
+    if (!$tem_cep) {
+        echo "<h3>4. Adicionando coluna 'cep'...</h3>";
+        $sql = "ALTER TABLE saloes ADD COLUMN cep VARCHAR(10) NULL AFTER cidade";
+        $conn->exec($sql);
+        echo "<p style='color: green;'>✅ Coluna 'cep' adicionada com sucesso!</p>";
+        $alteracoes_feitas[] = 'cep';
+    }
+    
+    if (empty($alteracoes_feitas)) {
+        echo "<div style='background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px;'>";
+        echo "<h4>✅ Estrutura já está correta!</h4>";
+        echo "<p>Todas as colunas necessárias já existem na tabela 'saloes'.</p>";
+        echo "</div>";
+    } else {
+        echo "<div style='background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px;'>";
+        echo "<h4>✅ Correções aplicadas com sucesso!</h4>";
+        echo "<p>Colunas adicionadas: " . implode(', ', $alteracoes_feitas) . "</p>";
+        echo "</div>";
+    }
+    
+    // Mostrar estrutura final
+    echo "<h3>5. Estrutura final da tabela 'saloes':</h3>";
+    $stmt = $conn->prepare("DESCRIBE saloes");
+    $stmt->execute();
+    $colunas_finais = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Chave</th><th>Padrão</th></tr>";
+    
+    foreach ($colunas_finais as $coluna) {
+        $destaque = in_array($coluna['Field'], ['bairro', 'cidade', 'cep']) ? "style='background-color: #d4edda;'" : "";
+        echo "<tr {$destaque}>";
+        echo "<td>" . htmlspecialchars($coluna['Field']) . "</td>";
+        echo "<td>" . htmlspecialchars($coluna['Type']) . "</td>";
+        echo "<td>" . htmlspecialchars($coluna['Null']) . "</td>";
+        echo "<td>" . htmlspecialchars($coluna['Key']) . "</td>";
+        echo "<td>" . htmlspecialchars($coluna['Default'] ?? '') . "</td>";
         echo "</tr>";
     }
+    
     echo "</table>";
     
-    // Mostrar dados existentes
-    $stmt = $conn->query("SELECT * FROM saloes");
-    $saloes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    if (!empty($saloes)) {
-        echo "<h3>Dados existentes na tabela saloes:</h3>";
-        echo "<table border='1' style='border-collapse: collapse; margin: 10px 0;'>";
-        echo "<tr>";
-        foreach (array_keys($saloes[0]) as $campo) {
-            echo "<th>{$campo}</th>";
-        }
-        echo "</tr>";
-        
-        foreach ($saloes as $salao) {
-            echo "<tr>";
-            foreach ($salao as $valor) {
-                echo "<td>" . htmlspecialchars($valor ?? '') . "</td>";
-            }
-            echo "</tr>";
-        }
-        echo "</table>";
-    } else {
-        echo "<p>Nenhum salão cadastrado ainda.</p>";
-    }
+    echo "<div style='background-color: #cce5ff; border: 1px solid #99ccff; padding: 15px; border-radius: 5px; margin-top: 20px;'>";
+    echo "<h4>📋 Próximos Passos:</h4>";
+    echo "<ol>";
+    echo "<li>Atualizar o método <code>cadastrarSalao</code> na classe <code>Usuario</code> para salvar os dados nas colunas separadas</li>";
+    echo "<li>Testar o cadastro de novos parceiros para verificar se os dados estão sendo salvos corretamente</li>";
+    echo "<li>Considerar migrar dados existentes (se houver endereços concatenados que possam ser separados)</li>";
+    echo "</ol>";
+    echo "</div>";
     
 } catch (Exception $e) {
-    echo "<h2>Erro ao corrigir estrutura:</h2>";
-    echo "<p style='color: red;'>" . $e->getMessage() . "</p>";
+    echo "<div style='background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px;'>";
+    echo "<h4>❌ Erro:</h4>";
+    echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p><strong>Detalhes técnicos:</strong></p>";
+    echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+    echo "</div>";
 }
 ?>
-
-<style>
-body { font-family: Arial, sans-serif; margin: 20px; }
-table { width: 100%; }
-th, td { padding: 8px; text-align: left; }
-th { background-color: #f2f2f2; }
-</style>
-
-<hr>
-<p><a href="parceiro/salao.php">← Voltar para página do salão</a></p>

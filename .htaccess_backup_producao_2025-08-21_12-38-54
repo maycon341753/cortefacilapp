@@ -1,0 +1,40 @@
+# .htaccess otimizado para Hostinger - CorteFacil App
+# Gerado automaticamente em 2025-08-21 12:36:33
+
+# Habilitar RewriteEngine
+RewriteEngine On
+
+# Definir diretório base
+RewriteBase /
+
+# Configurações de segurança
+<Files ~ "^\.(htaccess|htpasswd)$">
+Order allow,deny
+Deny from all
+</Files>
+
+# Proteger arquivos sensíveis
+<FilesMatch "\.(sql|log|md|txt)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Configurações PHP para Hostinger
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+    php_value upload_max_filesize 32M
+    php_value post_max_size 32M
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+
+# Roteamento principal
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Configurações de erro personalizadas
+ErrorDocument 404 /index.php
+ErrorDocument 403 /index.php
+ErrorDocument 500 /index.php

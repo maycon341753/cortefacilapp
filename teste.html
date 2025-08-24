@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste HTML</title>
+</head>
+<body>
+    <h1>✅ Teste HTML Funcionando!</h1>
+    <p>Data/Hora: <span id="datetime"></span></p>
+    <p>Este é um arquivo HTML estático.</p>
+    <p>Se você está vendo esta mensagem, o servidor está servindo arquivos HTML corretamente.</p>
+    
+    <script>
+        document.getElementById('datetime').textContent = new Date().toLocaleString('pt-BR');
+    </script>
+</body>
+</html>

@@ -17,21 +17,41 @@ class Salao {
     /**
      * Cadastra um novo salão
      * @param array $dados
-     * @return bool
+     * @return int|false ID do salão criado ou false em caso de erro
      */
     public function cadastrar($dados) {
         try {
-            $sql = "INSERT INTO {$this->table} (id_dono, nome, endereco, telefone, descricao) 
-                    VALUES (:id_dono, :nome, :endereco, :telefone, :descricao)";
+            // A tabela saloes usa id_dono como chave estrangeira e colunas separadas para endereço
+            $sql = "INSERT INTO {$this->table} (nome, endereco, bairro, cidade, cep, telefone, email, descricao, documento, id_dono, created_at) 
+                    VALUES (:nome, :endereco, :bairro, :cidade, :cep, :telefone, :email, :descricao, :documento, :id_dono, NOW())";
             
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_dono', $dados['id_dono']);
             $stmt->bindParam(':nome', $dados['nome']);
             $stmt->bindParam(':endereco', $dados['endereco']);
+            
+            $bairro = $dados['bairro'] ?? null;
+            $cidade = $dados['cidade'] ?? null;
+            $cep = $dados['cep'] ?? null;
+            $email = $dados['email'] ?? null;
+            
+            $stmt->bindParam(':bairro', $bairro);
+            $stmt->bindParam(':cidade', $cidade);
+            $stmt->bindParam(':cep', $cep);
             $stmt->bindParam(':telefone', $dados['telefone']);
+            $stmt->bindParam(':email', $email);
             $stmt->bindParam(':descricao', $dados['descricao']);
             
-            return $stmt->execute();
+            $documento = $dados['documento'] ?? '';
+            $stmt->bindParam(':documento', $documento);
+            
+            // Aceita ambos para compatibilidade
+            $id_dono = $dados['id_dono'] ?? $dados['usuario_id'] ?? null;
+            $stmt->bindParam(':id_dono', $id_dono);
+            
+            if ($stmt->execute()) {
+                return $this->conn->lastInsertId();
+            }
+            return false;
         } catch(PDOException $e) {
             error_log("Erro ao cadastrar salão: " . $e->getMessage());
             return false;
@@ -44,7 +64,8 @@ class Salao {
      */
     public function listarAtivos() {
         try {
-            $sql = "SELECT s.*, u.nome as nome_dono 
+            $sql = "SELECT s.*, u.nome as nome_dono,
+                           (SELECT COUNT(*) FROM agendamentos a WHERE a.id_salao = s.id) as total_agendamentos
                     FROM {$this->table} s 
                     INNER JOIN usuarios u ON s.id_dono = u.id 
                     WHERE s.ativo = 1 
@@ -69,7 +90,7 @@ class Salao {
         try {
             $sql = "SELECT s.*, u.nome as nome_dono 
                     FROM {$this->table} s 
-                    INNER JOIN usuarios u ON s.id_dono = u.id 
+                    LEFT JOIN usuarios u ON s.id_dono = u.id 
                     WHERE s.id = :id";
             
             $stmt = $this->conn->prepare($sql);
@@ -85,15 +106,15 @@ class Salao {
     
     /**
      * Busca salões do parceiro
-     * @param int $id_dono
-     * @return array
+     * @param int $usuario_id
+     * @return array|false
      */
-    public function buscarPorDono($id_dono) {
+    public function buscarPorDono($usuario_id) {
         try {
-            $sql = "SELECT * FROM {$this->table} WHERE id_dono = :id_dono LIMIT 1";
+            $sql = "SELECT * FROM {$this->table} WHERE id_dono = :usuario_id LIMIT 1";
             
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_dono', $id_dono);
+            $stmt->bindParam(':usuario_id', $usuario_id);
             $stmt->execute();
             
             return $stmt->fetch();
@@ -112,14 +133,24 @@ class Salao {
     public function atualizar($id, $dados) {
         try {
             $sql = "UPDATE {$this->table} 
-                    SET nome = :nome, endereco = :endereco, telefone = :telefone, descricao = :descricao 
+                    SET nome = :nome, endereco = :endereco, bairro = :bairro, cidade = :cidade, cep = :cep, telefone = :telefone, email = :email, descricao = :descricao 
                     WHERE id = :id";
             
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':nome', $dados['nome']);
             $stmt->bindParam(':endereco', $dados['endereco']);
+            
+            $bairro = $dados['bairro'] ?? null;
+            $cidade = $dados['cidade'] ?? null;
+            $cep = $dados['cep'] ?? null;
+            $email = $dados['email'] ?? null;
+            
+            $stmt->bindParam(':bairro', $bairro);
+            $stmt->bindParam(':cidade', $cidade);
+            $stmt->bindParam(':cep', $cep);
             $stmt->bindParam(':telefone', $dados['telefone']);
+            $stmt->bindParam(':email', $email);
             $stmt->bindParam(':descricao', $dados['descricao']);
             
             return $stmt->execute();
@@ -205,11 +236,11 @@ class Salao {
     public function listarComFiltrosAdmin($filtros = [], $limite = 20, $offset = 0) {
         try {
             $sql = "SELECT s.*, u.nome as proprietario_nome, u.email as proprietario_email,
-                           (SELECT COUNT(*) FROM profissionais p WHERE p.id_salao = s.id) as total_profissionais,
+                           (SELECT COUNT(*) FROM profissionais p WHERE p.id_salao = s.id AND p.status = 'ativo') as total_profissionais,
                            (SELECT COUNT(*) FROM agendamentos a WHERE a.id_salao = s.id) as total_agendamentos,
                            (SELECT SUM(a.valor_taxa) FROM agendamentos a WHERE a.id_salao = s.id AND a.status IN ('confirmado', 'concluido')) as receita_total
                     FROM {$this->table} s 
-                    INNER JOIN usuarios u ON s.id_dono = u.id 
+                    INNER JOIN usuarios u ON s.usuario_id = u.id 
                     WHERE 1=1";
             
             $params = [];
@@ -268,7 +299,7 @@ class Salao {
     public function contarComFiltrosAdmin($filtros = []) {
         try {
             $sql = "SELECT COUNT(*) FROM {$this->table} s 
-                    INNER JOIN usuarios u ON s.id_dono = u.id 
+                    INNER JOIN usuarios u ON s.usuario_id = u.id 
                     WHERE 1=1";
             
             $params = [];
@@ -341,7 +372,7 @@ class Salao {
         try {
             $sql = "SELECT s.*, u.nome as nome_dono 
                     FROM {$this->table} s 
-                    INNER JOIN usuarios u ON s.id_dono = u.id 
+                    INNER JOIN usuarios u ON s.usuario_id = u.id 
                     ORDER BY s.created_at DESC";
             
             $stmt = $this->conn->prepare($sql);

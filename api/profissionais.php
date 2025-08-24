@@ -4,6 +4,11 @@
  * Retorna lista de profissionais em formato JSON
  */
 
+// Iniciar sessão se não estiver ativa
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
@@ -20,11 +25,12 @@ try {
     }
     
     // Verificar se foi passado o ID do salão
-    if (!isset($_GET['salao']) || empty($_GET['salao'])) {
+    $salao_param = $_GET['salao_id'] ?? $_GET['salao'] ?? '';
+    if (empty($salao_param)) {
         throw new Exception('ID do salão é obrigatório.');
     }
     
-    $id_salao = (int)$_GET['salao'];
+    $id_salao = (int)$salao_param;
     
     if ($id_salao <= 0) {
         throw new Exception('ID do salão inválido.');
@@ -45,7 +51,7 @@ try {
     // Retornar resposta
     echo json_encode([
         'success' => true,
-        'data' => $profissionais_ativos,
+        'profissionais' => $profissionais_ativos,
         'total' => count($profissionais_ativos)
     ]);
     

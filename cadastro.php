@@ -153,6 +153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Para parceiros, usar método específico que gerencia a transação
              if ($tipo_usuario === 'parceiro') {
+                // Processar horários de funcionamento
+                $horarios = [];
+                if (isset($_POST['horarios']) && is_array($_POST['horarios'])) {
+                    foreach ($_POST['horarios'] as $dia => $horario) {
+                        if (isset($horario['ativo']) && $horario['ativo'] == '1') {
+                            $horarios[] = [
+                                'dia_semana' => (int)$dia,
+                                'hora_abertura' => $horario['abertura'] ?? '08:00',
+                                'hora_fechamento' => $horario['fechamento'] ?? '18:00'
+                            ];
+                        }
+                    }
+                }
+                
                 $dadosSalao = [
                     'nome' => $nome, // Nome do salão igual ao nome do usuário inicialmente
                     'endereco' => $endereco,
@@ -164,10 +178,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'tipo_documento' => $tipo_documento,
                     'razao_social' => $razao_social,
                     'inscricao_estadual' => $inscricao_estadual,
-                    'descricao' => 'Salão cadastrado via sistema'
+                    'descricao' => 'Salão cadastrado via sistema',
+                    'horarios' => $horarios // Adicionar horários aos dados do salão
                 ];
                 
-                error_log("[CADASTRO] Tentando cadastrar parceiro");
+                error_log("[CADASTRO] Tentando cadastrar parceiro com horários: " . json_encode($horarios));
                     
                     if ($usuario->cadastrarParceiro($dados, $dadosSalao)) {
                         error_log("[CADASTRO] Parceiro cadastrado com sucesso");
@@ -209,7 +224,7 @@ error_log("[CADASTRO] Iniciando renderização HTML");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -397,6 +412,167 @@ error_log("[CADASTRO] Iniciando renderização HTML");
                                        placeholder="00000-000" maxlength="9" required>
                                 <div class="invalid-feedback">
                                     Por favor, insira um CEP válido.
+                                </div>
+                            </div>
+                            
+                            <!-- Horários de Funcionamento -->
+                            <div class="card mt-4 mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clock me-2"></i>
+                                        Horários de Funcionamento
+                                    </h6>
+                                    <small class="text-muted">Configure os dias e horários que seu salão funcionará</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Segunda-feira -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="segunda_ativo" name="horarios[1][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="segunda_ativo">
+                                                    Segunda-feira
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[1][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[1][fechamento]" value="18:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Terça-feira -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="terca_ativo" name="horarios[2][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="terca_ativo">
+                                                    Terça-feira
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[2][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[2][fechamento]" value="18:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quarta-feira -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="quarta_ativo" name="horarios[3][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="quarta_ativo">
+                                                    Quarta-feira
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[3][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[3][fechamento]" value="18:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quinta-feira -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="quinta_ativo" name="horarios[4][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="quinta_ativo">
+                                                    Quinta-feira
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[4][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[4][fechamento]" value="18:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Sexta-feira -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="sexta_ativo" name="horarios[5][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="sexta_ativo">
+                                                    Sexta-feira
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[5][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[5][fechamento]" value="18:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Sábado -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="sabado_ativo" name="horarios[6][ativo]" value="1" checked>
+                                                <label class="form-check-label fw-bold" for="sabado_ativo">
+                                                    Sábado
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[6][abertura]" value="08:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[6][fechamento]" value="16:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Domingo -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="domingo_ativo" name="horarios[0][ativo]" value="1">
+                                                <label class="form-check-label fw-bold" for="domingo_ativo">
+                                                    Domingo
+                                                </label>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Abertura</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[0][abertura]" value="09:00">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Fechamento</label>
+                                                    <input type="time" class="form-control form-control-sm" name="horarios[0][fechamento]" value="15:00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info mt-3">
+                                        <small>
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <strong>Dica:</strong> Marque os dias que seu salão funcionará e defina os horários de abertura e fechamento. Você poderá alterar essas informações depois no painel administrativo.
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                             <?php endif; ?>
@@ -744,6 +920,53 @@ error_log("[CADASTRO] Iniciando renderização HTML");
                 }
             });
         }
+        
+        // Controlar habilitação/desabilitação dos campos de horário
+        function configurarHorarios() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][id$="_ativo"]');
+            
+            checkboxes.forEach(function(checkbox) {
+                const diaContainer = checkbox.closest('.col-md-6');
+                const timeInputs = diaContainer.querySelectorAll('input[type="time"]');
+                
+                function toggleTimeInputs() {
+                    timeInputs.forEach(function(input) {
+                        input.disabled = !checkbox.checked;
+                        if (!checkbox.checked) {
+                            input.style.opacity = '0.5';
+                            input.value = '';
+                        } else {
+                            input.style.opacity = '1';
+                            // Restaurar valores padrão se estiver vazio
+                            if (!input.value) {
+                                if (input.name.includes('abertura')) {
+                                    input.value = checkbox.id === 'domingo_ativo' ? '09:00' : '08:00';
+                                } else if (input.name.includes('fechamento')) {
+                                    if (checkbox.id === 'sabado_ativo') {
+                                        input.value = '16:00';
+                                    } else if (checkbox.id === 'domingo_ativo') {
+                                        input.value = '15:00';
+                                    } else {
+                                        input.value = '18:00';
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Configurar estado inicial
+                toggleTimeInputs();
+                
+                // Adicionar evento de mudança
+                checkbox.addEventListener('change', toggleTimeInputs);
+            });
+        }
+        
+        // Configurar horários quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            configurarHorarios();
+        });
     </script>
 </body>
 </html>

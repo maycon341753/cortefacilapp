@@ -9,9 +9,27 @@ require_once __DIR__ . '/../config/database.php';
 class Usuario {
     private $conn;
     private $table = 'usuarios';
+    private $connectionAvailable = false;
     
     public function __construct() {
         $this->conn = getConnection();
+        $this->connectionAvailable = ($this->conn !== null);
+    }
+    
+    /**
+     * Verifica se a conexão com o banco está disponível
+     * @return bool
+     */
+    public function isConnectionAvailable() {
+        return $this->connectionAvailable;
+    }
+    
+    /**
+     * Retorna mensagem de erro amigável para o usuário
+     * @return string
+     */
+    private function getConnectionErrorMessage() {
+        return 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.';
     }
     
     /**
@@ -60,9 +78,15 @@ class Usuario {
      * Realiza login do usuário
      * @param string $email
      * @param string $senha
-     * @return array|false
+     * @return array|false|string (string em caso de erro de conexão)
      */
     public function login($email, $senha) {
+        // Verificar se a conexão está disponível
+        if (!$this->connectionAvailable) {
+            error_log('Tentativa de login sem conexão com banco de dados');
+            return $this->getConnectionErrorMessage();
+        }
+        
         try {
             $sql = "SELECT * FROM {$this->table} WHERE email = :email";
             $stmt = $this->conn->prepare($sql);
@@ -80,7 +104,8 @@ class Usuario {
             return false;
         } catch(PDOException $e) {
             error_log("Erro no login: " . $e->getMessage());
-            return false;
+            // Retornar mensagem amigável em vez de false
+            return $this->getConnectionErrorMessage();
         }
     }
     
@@ -169,9 +194,9 @@ class Usuario {
      */
     public function cadastrarSalao($usuario_id, $dados) {
         try {
-            // SQL adaptado para a estrutura do banco online (usando id_dono)
-            $sql = "INSERT INTO saloes (id_dono, nome, endereco, telefone, documento, tipo_documento, razao_social, inscricao_estadual, descricao) 
-                    VALUES (:id_dono, :nome, :endereco, :telefone, :documento, :tipo_documento, :razao_social, :inscricao_estadual, :descricao)";
+            // SQL atualizado para incluir colunas separadas de bairro, cidade e CEP e garantir que o salão seja ativo
+            $sql = "INSERT INTO saloes (id_dono, nome, endereco, bairro, cidade, cep, telefone, documento, tipo_documento, razao_social, inscricao_estadual, descricao, ativo) 
+                    VALUES (:id_dono, :nome, :endereco, :bairro, :cidade, :cep, :telefone, :documento, :tipo_documento, :razao_social, :inscricao_estadual, :descricao, :ativo)";
             
             $stmt = $this->conn->prepare($sql);
             
@@ -182,21 +207,28 @@ class Usuario {
             $telefone = $dados['telefone'] ?? '';
             $descricao = $dados['descricao'] ?? 'Salão cadastrado via sistema';
             
-            // Combinar endereço completo (incluindo bairro, cidade e CEP se disponíveis)
-            $endereco_completo = $dados['endereco'] ?? 'Endereço não informado';
-            if (!empty($dados['bairro']) || !empty($dados['cidade']) || !empty($dados['cep'])) {
-                $endereco_completo .= ', ' . ($dados['bairro'] ?? '') . ', ' . ($dados['cidade'] ?? '') . ' - CEP: ' . ($dados['cep'] ?? '');
-            }
+            // Usar endereço sem concatenar bairro, cidade e CEP
+            $endereco = $dados['endereco'] ?? 'Endereço não informado';
+            $bairro = $dados['bairro'] ?? null;
+            $cidade = $dados['cidade'] ?? null;
+            $cep = $dados['cep'] ?? null;
+            
+            // Garantir que o salão seja criado como ativo
+            $ativo = 1;
             
             $stmt->bindParam(':id_dono', $usuario_id);
             $stmt->bindParam(':nome', $dados['nome']);
-            $stmt->bindParam(':endereco', $endereco_completo);
+            $stmt->bindParam(':endereco', $endereco);
+            $stmt->bindParam(':bairro', $bairro);
+            $stmt->bindParam(':cidade', $cidade);
+            $stmt->bindParam(':cep', $cep);
             $stmt->bindParam(':telefone', $telefone);
             $stmt->bindParam(':documento', $documento_limpo);
             $stmt->bindParam(':tipo_documento', $dados['tipo_documento']);
             $stmt->bindParam(':razao_social', $razao_social);
             $stmt->bindParam(':inscricao_estadual', $inscricao_estadual);
             $stmt->bindParam(':descricao', $descricao);
+            $stmt->bindParam(':ativo', $ativo);
             
             return $stmt->execute();
         } catch(PDOException $e) {
@@ -234,32 +266,134 @@ class Usuario {
                 if ($usuario_id > 0) {
                     // Cadastrar salão
                     if ($this->cadastrarSalao($usuario_id, $dadosSalao)) {
+                        // Obter ID do salão recém-criado
+                        $salao_id = $this->conn->lastInsertId();
+                        
+                        // Se não conseguir o ID via lastInsertId, buscar pelo id_dono
+                        if ($salao_id == 0 || empty($salao_id)) {
+                            $stmt = $this->conn->prepare("SELECT id FROM saloes WHERE id_dono = ? ORDER BY id DESC LIMIT 1");
+                            $stmt->execute([$usuario_id]);
+                            $salao = $stmt->fetch();
+                            $salao_id = $salao ? $salao['id'] : 0;
+                        }
+                        
+                        // Cadastrar horários de funcionamento se fornecidos
+                        if ($salao_id > 0 && isset($dadosSalao['horarios']) && !empty($dadosSalao['horarios'])) {
+                            if (!$this->cadastrarHorariosFuncionamento($salao_id, $dadosSalao['horarios'])) {
+                                error_log("Aviso: Erro ao cadastrar horários de funcionamento, mas salão foi criado");
+                                // Não fazer rollback aqui, pois o salão foi criado com sucesso
+                                // Os horários podem ser configurados depois
+                            }
+                        }
+                        
                         $this->conn->commit();
-                        error_log("Parceiro cadastrado com sucesso - Usuario ID: " . $usuario_id);
-                        return true;
+                        error_log("Parceiro cadastrado com sucesso - Usuario ID: " . $usuario_id . ", Salao ID: " . $salao_id);
+                        return [
+                            'success' => true,
+                            'message' => 'Parceiro cadastrado com sucesso',
+                            'user_id' => $usuario_id,
+                            'salao_id' => $salao_id
+                        ];
                     } else {
                         $this->conn->rollback();
                         error_log("Erro ao cadastrar salão - rollback executado");
-                        return false;
+                        return [
+                            'success' => false,
+                            'message' => 'Erro ao cadastrar salão'
+                        ];
                     }
                 } else {
                     $this->conn->rollback();
                     error_log("Erro: ID do usuário não foi obtido corretamente");
-                    return false;
+                    return [
+                        'success' => false,
+                        'message' => 'Erro: ID do usuário não foi obtido corretamente'
+                    ];
                 }
             } else {
                 $this->conn->rollback();
                 error_log("Erro ao cadastrar usuário - rollback executado");
-                return false;
+                return [
+                    'success' => false,
+                    'message' => 'Erro ao cadastrar usuário'
+                ];
             }
         } catch (Exception $e) {
             $this->conn->rollback();
             error_log("Erro ao cadastrar parceiro: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
+            return [
+                'success' => false,
+                'message' => 'Erro ao cadastrar parceiro: ' . $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
+     * Cadastra horários de funcionamento do salão
+     * @param int $salao_id
+     * @param array $horarios
+     * @return bool
+     */
+    public function cadastrarHorariosFuncionamento($salao_id, $horarios) {
+        try {
+            // Verificar se a tabela horarios_funcionamento existe
+            $stmt = $this->conn->prepare("SHOW TABLES LIKE 'horarios_funcionamento'");
+            $stmt->execute();
+            
+            if ($stmt->rowCount() == 0) {
+                // Criar tabela se não existir
+                $this->criarTabelaHorariosFuncionamento();
+            }
+            
+            // Inserir horários
+            $sql = "INSERT INTO horarios_funcionamento (id_salao, dia_semana, hora_abertura, hora_fechamento) VALUES (?, ?, ?, ?)";
+            $stmt = $this->conn->prepare($sql);
+            
+            foreach ($horarios as $horario) {
+                $stmt->execute([
+                    $salao_id,
+                    $horario['dia_semana'],
+                    $horario['hora_abertura'],
+                    $horario['hora_fechamento']
+                ]);
+            }
+            
+            error_log("Horários de funcionamento cadastrados para salão ID: " . $salao_id);
+            return true;
+        } catch(PDOException $e) {
+            error_log("Erro ao cadastrar horários de funcionamento: " . $e->getMessage());
             return false;
         }
     }
     
+    /**
+     * Cria a tabela horarios_funcionamento se não existir
+     * @return bool
+     */
+    private function criarTabelaHorariosFuncionamento() {
+        try {
+            $sql = "CREATE TABLE IF NOT EXISTS horarios_funcionamento (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_salao INT NOT NULL,
+                dia_semana TINYINT NOT NULL COMMENT '0=Domingo, 1=Segunda, 2=Terça, 3=Quarta, 4=Quinta, 5=Sexta, 6=Sábado',
+                hora_abertura TIME NOT NULL,
+                hora_fechamento TIME NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (id_salao) REFERENCES saloes(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_salao_dia (id_salao, dia_semana)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            
+            $this->conn->exec($sql);
+            error_log("Tabela horarios_funcionamento criada com sucesso");
+            return true;
+        } catch(PDOException $e) {
+            error_log("Erro ao criar tabela horarios_funcionamento: " . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Verifica se documento já existe na tabela saloes
      * @param string $documento

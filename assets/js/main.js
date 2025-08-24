@@ -280,8 +280,16 @@ const CorteFacil = {
         get: function(url, callback) {
             fetch(url)
                 .then(response => response.json())
-                .then(data => callback(null, data))
-                .catch(error => callback(error, null));
+                .then(data => {
+                    if (typeof callback === 'function') {
+                        callback(null, data);
+                    }
+                })
+                .catch(error => {
+                    if (typeof callback === 'function') {
+                        callback(error, null);
+                    }
+                });
         },
         
         post: function(url, data, callback) {
@@ -293,8 +301,16 @@ const CorteFacil = {
                 body: JSON.stringify(data)
             })
             .then(response => response.json())
-            .then(data => callback(null, data))
-            .catch(error => callback(error, null));
+            .then(data => {
+                if (typeof callback === 'function') {
+                    callback(null, data);
+                }
+            })
+            .catch(error => {
+                if (typeof callback === 'function') {
+                    callback(error, null);
+                }
+            });
         }
     },
     

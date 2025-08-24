@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste JavaScript - Sintaxe Corrigida</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .salon-card { border: 1px solid #ddd; padding: 15px; margin: 10px; border-radius: 5px; cursor: pointer; }
+        .salon-select-btn { background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 3px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Sintaxe JavaScript Corrigida</h1>
+    
+    <div id="resultado" class="result">Carregando teste...</div>
+    
+    <!-- Simulação dos elementos da página agendar.php -->
+    <div class="salon-card" data-salon-id="1">
+        <h3 class="card-title">Salão Teste</h3>
+        <button class="salon-select-btn">Agendar Aqui</button>
+    </div>
+    
+    <select id="id_profissional">
+        <option value="">Selecione um profissional</option>
+        <option value="1">João Silva</option>
+    </select>
+    
+    <input type="date" id="data">
+    <select id="hora">
+        <option value="">Selecione um horário</option>
+        <option value="09:00">09:00</option>
+        <option value="10:00">10:00</option>
+    </select>
+    
+    <script>
+        // Variáveis globais simuladas
+        let currentStep = 1;
+        let horarioBloqueado = null;
+        
+        // Função simulada
+        function selecionarSalao(card, salonId, salonName) {
+            console.log('✅ Salão selecionado:', salonName, 'ID:', salonId);
+            document.getElementById('resultado').innerHTML = 
+                '<div class="success">✅ Salão selecionado com sucesso: ' + salonName + ' (ID: ' + salonId + ')</div>';
+        }
+        
+        // Função simulada para bloquear horário
+        function bloquearHorario(profissional_id, data, hora, acao = 'bloquear') {
+            return new Promise((resolve) => {
+                console.log('🔒 Bloqueando horário:', { profissional_id, data, hora, acao });
+                setTimeout(() => {
+                    resolve({ success: true });
+                }, 100);
+            });
+        }
+        
+        // Função simulada
+        function atualizarHorariosEmTempoReal() {
+            console.log('🔄 Atualizando horários em tempo real');
+        }
+        
+        // CÓDIGO CORRIGIDO DO AGENDAR.PHP
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM carregado, inicializando event listeners...');
+            
+            try {
+                // Adicionar event listeners aos botões de seleção de salão
+                document.querySelectorAll('.salon-select-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const card = this.closest('.salon-card');
+                        const salonId = card.getAttribute('data-salon-id');
+                        const salonName = card.querySelector('.card-title').textContent;
+                        selecionarSalao(card, salonId, salonName);
+                    });
+                });
+                
+                // Adicionar event listeners aos próprios cards de salão
+                document.querySelectorAll('.salon-card').forEach(function(card) {
+                    card.addEventListener('click', function(e) {
+                        // Não executar se clicou no botão (evitar duplo evento)
+                        if (e.target.closest('.salon-select-btn')) return;
+                        
+                        const salonId = this.getAttribute('data-salon-id');
+                        const salonName = this.querySelector('.card-title').textContent;
+                        selecionarSalao(this, salonId, salonName);
+                    });
+                });
+                
+                // Evento quando horário é selecionado
+                document.getElementById('hora').addEventListener('change', function() {
+                    const horaAtual = this.value;
+                    const profissionalId = document.getElementById('id_profissional').value;
+                    const data = document.getElementById('data').value;
+                    
+                    if (horaAtual && profissionalId && data) {
+                        // Desbloquear horário anterior se existir
+                        if (horarioBloqueado) {
+                            bloquearHorario(
+                                horarioBloqueado.profissional_id,
+                                horarioBloqueado.data,
+                                horarioBloqueado.hora,
+                                'desbloquear'
+                            );
+                        }
+                        
+                        // Bloquear novo horário
+                        bloquearHorario(profissionalId, data, horaAtual, 'bloquear')
+                            .then(response => {
+                                if (response.success) {
+                                    horarioBloqueado = {
+                                        profissional_id: profissionalId,
+                                        data: data,
+                                        hora: horaAtual
+                                    };
+                                    console.log('✅ Horário bloqueado:', horaAtual);
+                                } else {
+                                    console.warn('⚠️ Não foi possível bloquear horário:', response.error);
+                                    alert('Este horário foi selecionado por outro cliente. Por favor, escolha outro horário.');
+                                    this.value = '';
+                                    atualizarHorariosEmTempoReal();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro ao bloquear horário:', error);
+                            });
+                    }
+                });
+                
+                console.log('✅ Todos os event listeners foram adicionados com sucesso!');
+                document.getElementById('resultado').innerHTML = 
+                    '<div class="success">✅ JavaScript carregado sem erros de sintaxe! Clique no botão "Agendar Aqui" para testar.</div>';
+                    
+            } catch (error) {
+                console.error('❌ Erro ao inicializar:', error);
+                document.getElementById('resultado').innerHTML = 
+                    '<div class="error">❌ Erro de sintaxe: ' + error.message + '</div>';
+            }
+        });
+    </script>
+</body>
+</html>

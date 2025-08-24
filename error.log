@@ -71,3 +71,10 @@
 [20-Aug-2025 17:58:10 Europe/Berlin] [CADASTRO] Tipo de usuário: cliente
 [20-Aug-2025 17:58:10 Europe/Berlin] [CADASTRO] Iniciando renderização HTML
 [20-Aug-2025 17:58:10 Europe/Berlin] [CADASTRO] HTML renderizado com sucesso
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\teste_dashboard_completo.php on line 18
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 228
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 229
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 230
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 233
+[21-Aug-2025 14:18:12 Europe/Berlin] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\cortefacil\cortefacilapp\includes\auth.php on line 236
+[21-Aug-2025 14:18:12 Europe/Berlin] Conexão local estabelecida com sucesso

@@ -16,20 +16,47 @@ class Profissional {
     
     /**
      * Cadastra um novo profissional
-     * @param array $dados
-     * @return bool
+     * @param mixed $dados_ou_id_salao Array de dados ou ID do salão
+     * @param string $nome Nome do profissional (se usando parâmetros individuais)
+     * @param string $especialidade Especialidade (se usando parâmetros individuais)
+     * @param string $telefone Telefone (se usando parâmetros individuais)
+     * @param string $email Email (se usando parâmetros individuais)
+     * @return int|bool ID do profissional cadastrado ou false em caso de erro
      */
-    public function cadastrar($dados) {
+    public function cadastrar($dados_ou_id_salao, $nome = null, $especialidade = null, $telefone = null, $email = null) {
         try {
-            $sql = "INSERT INTO {$this->table} (id_salao, nome, especialidade) 
-                    VALUES (:id_salao, :nome, :especialidade)";
+            // Verificar se foi passado array ou parâmetros individuais
+            if (is_array($dados_ou_id_salao)) {
+                // Modo array (compatibilidade com a página)
+                $dados = $dados_ou_id_salao;
+                $id_salao = $dados['salao_id'] ?? $dados['id_salao'];
+                $nome = $dados['nome'];
+                $especialidade = $dados['especialidade'];
+                $telefone = $dados['telefone'] ?? null;
+                $email = $dados['email'] ?? null;
+                $status = ($dados['ativo'] ?? 1) ? 'ativo' : 'inativo';
+            } else {
+                // Modo parâmetros individuais
+                $id_salao = $dados_ou_id_salao;
+                $status = 'ativo'; // Padrão para novos profissionais
+            }
+            
+            $sql = "INSERT INTO {$this->table} (id_salao, nome, especialidade, telefone, email, status) 
+                    VALUES (:id_salao, :nome, :especialidade, :telefone, :email, :status)";
             
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_salao', $dados['id_salao']);
-            $stmt->bindParam(':nome', $dados['nome']);
-            $stmt->bindParam(':especialidade', $dados['especialidade']);
             
-            return $stmt->execute();
+            $stmt->bindParam(':id_salao', $id_salao, PDO::PARAM_INT);
+            $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+            $stmt->bindParam(':especialidade', $especialidade, PDO::PARAM_STR);
+            $stmt->bindParam(':telefone', $telefone, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':status', $status, PDO::PARAM_STR);
+            
+            if ($stmt->execute()) {
+                return $this->conn->lastInsertId();
+            }
+            return false;
         } catch(PDOException $e) {
             error_log("Erro ao cadastrar profissional: " . $e->getMessage());
             return false;
@@ -43,17 +70,29 @@ class Profissional {
      */
     public function listarPorSalao($id_salao) {
         try {
-            $sql = "SELECT p.*, s.nome as nome_salao 
-                    FROM {$this->table} p 
-                    INNER JOIN saloes s ON p.id_salao = s.id 
-                    WHERE p.id_salao = :id_salao AND p.ativo = 1 
-                    ORDER BY p.nome";
+            // Consulta simplificada sem JOIN para evitar problemas
+            $sql = "SELECT * FROM {$this->table} WHERE id_salao = :id_salao ORDER BY nome";
             
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_salao', $id_salao);
+            $stmt->bindParam(':id_salao', $id_salao, PDO::PARAM_INT);
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            $profissionais = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Adicionar nome do salão se necessário
+            if (!empty($profissionais)) {
+                $sql_salao = "SELECT nome FROM saloes WHERE id = :id_salao";
+                $stmt_salao = $this->conn->prepare($sql_salao);
+                $stmt_salao->bindParam(':id_salao', $id_salao, PDO::PARAM_INT);
+                $stmt_salao->execute();
+                $salao = $stmt_salao->fetch(PDO::FETCH_ASSOC);
+                
+                foreach ($profissionais as &$prof) {
+                    $prof['nome_salao'] = $salao ? $salao['nome'] : '';
+                }
+            }
+            
+            return $profissionais;
         } catch(PDOException $e) {
             error_log("Erro ao listar profissionais: " . $e->getMessage());
             return [];
@@ -93,7 +132,7 @@ class Profissional {
             $sql = "SELECT p.*, s.nome as nome_salao 
                     FROM {$this->table} p 
                     INNER JOIN saloes s ON p.id_salao = s.id 
-                    WHERE s.id_dono = :id_dono AND p.ativo = 1 
+                    WHERE s.id_dono = :id_dono AND p.status = 'ativo' 
                     ORDER BY s.nome, p.nome";
             
             $stmt = $this->conn->prepare($sql);
@@ -116,13 +155,17 @@ class Profissional {
     public function atualizar($id, $dados) {
         try {
             $sql = "UPDATE {$this->table} 
-                    SET nome = :nome, especialidade = :especialidade 
+                    SET nome = :nome, especialidade = :especialidade, telefone = :telefone, email = :email, status = :status 
                     WHERE id = :id";
             
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':nome', $dados['nome']);
             $stmt->bindParam(':especialidade', $dados['especialidade']);
+            $stmt->bindParam(':telefone', $dados['telefone'] ?? null);
+            $stmt->bindParam(':email', $dados['email'] ?? null);
+            $status = ($dados['ativo'] ?? 1) ? 'ativo' : 'inativo';
+            $stmt->bindParam(':status', $status);
             
             return $stmt->execute();
         } catch(PDOException $e) {
@@ -139,15 +182,70 @@ class Profissional {
      */
     public function alterarStatus($id, $ativo) {
         try {
-            $sql = "UPDATE {$this->table} SET ativo = :ativo WHERE id = :id";
+            $status = $ativo ? 'ativo' : 'inativo';
+            $sql = "UPDATE {$this->table} SET status = :status WHERE id = :id";
             
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id', $id);
-            $stmt->bindParam(':ativo', $ativo, PDO::PARAM_BOOL);
+            $stmt->bindParam(':status', $status);
             
             return $stmt->execute();
         } catch(PDOException $e) {
             error_log("Erro ao alterar status do profissional: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Exclui profissional completamente do banco de dados
+     * @param int $id
+     * @return bool
+     */
+    public function excluir($id) {
+        try {
+            // Verificar se há agendamentos futuros
+            $sql_check = "SELECT COUNT(*) as total FROM agendamentos WHERE id_profissional = :id AND data >= CURDATE() AND status IN ('agendado', 'confirmado')";
+            $stmt_check = $this->conn->prepare($sql_check);
+            $stmt_check->bindParam(':id', $id);
+            $stmt_check->execute();
+            $result = $stmt_check->fetch();
+            
+            if ($result['total'] > 0) {
+                throw new Exception('Não é possível excluir profissional com agendamentos futuros. Desative-o ao invés de excluir.');
+            }
+            
+            // Iniciar transação
+            $this->conn->beginTransaction();
+            
+            // Excluir agendamentos antigos do profissional
+            $sql_agendamentos = "DELETE FROM agendamentos WHERE id_profissional = :id";
+            $stmt_agendamentos = $this->conn->prepare($sql_agendamentos);
+            $stmt_agendamentos->bindParam(':id', $id);
+            $stmt_agendamentos->execute();
+            
+            // Excluir o profissional
+            $sql = "DELETE FROM {$this->table} WHERE id = :id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id', $id);
+            $result = $stmt->execute();
+            
+            // Confirmar transação
+            $this->conn->commit();
+            
+            return $result;
+        } catch(Exception $e) {
+            // Reverter transação em caso de erro
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollback();
+            }
+            error_log("Erro ao excluir profissional: " . $e->getMessage());
+            throw $e;
+        } catch(PDOException $e) {
+            // Reverter transação em caso de erro
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollback();
+            }
+            error_log("Erro ao excluir profissional: " . $e->getMessage());
             return false;
         }
     }
@@ -231,10 +329,9 @@ class Profissional {
      */
     public function contarPorStatus($status) {
         try {
-            $ativo = ($status === 'ativo') ? 1 : 0;
-            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE ativo = :ativo";
+            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE status = :status";
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':ativo', $ativo, PDO::PARAM_INT);
+            $stmt->bindParam(':status', $status);
             $stmt->execute();
             
             return $stmt->fetchColumn();

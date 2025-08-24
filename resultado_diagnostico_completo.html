@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><title>Diagnóstico Servidor</title></head><body><h1>Diagnóstico do Servidor CorteFácil</h1><h2>Informações Básicas</h2><p><strong>Data/Hora:</strong> 2025-08-21 15:05:20</p><p><strong>Servidor:</strong> localhost</p><p><strong>Script:</strong> /cortefacil/cortefacilapp/index.php</p><p><strong>Request URI:</strong> /cortefacil/cortefacilapp/?page=diagnostico</p><p><strong>Document Root:</strong> C:/xampp/htdocs</p><p><strong>Script Filename:</strong> C:/xampp/htdocs/cortefacil/cortefacilapp/index.php</p><h2>Verificação de Arquivos</h2><p><strong>Arquivo atual:</strong> C:\xampp\htdocs\cortefacil\cortefacilapp\diagnostico_servidor.php</p><p><strong>Arquivo existe:</strong> SIM</p><p><strong>.htaccess existe:</strong> SIM</p><p><strong>Conteúdo .htaccess:</strong></p><pre># .htaccess para Produção - Hostinger CorteFacil
+# Versão EMERGENCIAL - Força acesso direto aos arquivos
+
+# DESABILITAR COMPLETAMENTE O MOD_REWRITE
+RewriteEngine Off
+
+# Forçar o Apache a servir arquivos diretamente
+&lt;IfModule mod_rewrite.c&gt;
+    RewriteEngine Off
+&lt;/IfModule&gt;
+
+# Configuração de DirectoryIndex para evitar redirecionamentos
+DirectoryIndex index.php index.html
+
+# Forçar o servidor a não fazer redirecionamentos automáticos
+&lt;IfModule mod_alias.c&gt;
+    # Desabilitar redirecionamentos automáticos
+    Options -MultiViews
+&lt;/IfModule&gt;
+
+# Segurança
+&lt;Files ~ &quot;^\.(htaccess|htpasswd)$&quot;&gt;
+Order allow,deny
+Deny from all
+&lt;/Files&gt;
+
+&lt;FilesMatch &quot;\.(sql|log|md|txt|backup)$&quot;&gt;
+Order allow,deny
+Deny from all
+&lt;/FilesMatch&gt;
+
+# Configurações PHP para Hostinger
+&lt;IfModule mod_php.c&gt;
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+    php_value upload_max_filesize 32M
+    php_value post_max_size 32M
+    php_flag display_errors Off
+    php_flag log_errors On
+&lt;/IfModule&gt;
+
+# Forçar tipos MIME corretos
+&lt;IfModule mod_mime.c&gt;
+    AddType text/html .html .htm
+    AddType application/x-httpd-php .php
+&lt;/IfModule&gt;
+
+# Cache e compressão
+&lt;IfModule mod_expires.c&gt;
+    ExpiresActive On
+    ExpiresByType text/css &quot;access plus 1 month&quot;
+    ExpiresByType application/javascript &quot;access plus 1 month&quot;
+    ExpiresByType image/png &quot;access plus 1 month&quot;
+    ExpiresByType image/jpg &quot;access plus 1 month&quot;
+    ExpiresByType image/jpeg &quot;access plus 1 month&quot;
+    ExpiresByType image/gif &quot;access plus 1 month&quot;
+&lt;/IfModule&gt;
+
+&lt;IfModule mod_deflate.c&gt;
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+&lt;/IfModule&gt;
+
+# Headers de segurança
+&lt;IfModule mod_headers.c&gt;
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection &quot;1; mode=block&quot;
+&lt;/IfModule&gt;</pre><p><strong>index.php existe:</strong> SIM</p><h2>Informações PHP</h2><p><strong>Versão PHP:</strong> 8.2.12</p><p><strong>SAPI:</strong> apache2handler</p><h2>Headers da Requisição</h2><pre>User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; pt-BR) WindowsPowerShell/5.1.26100.4768
+Host: localhost
+Connection: Keep-Alive
+</pre><h2>Variáveis Array Relevantes</h2><pre>REQUEST_METHOD: GET
+QUERY_STRING: page=diagnostico
+HTTP_HOST: localhost
+SERVER_NAME: localhost
+REQUEST_URI: /cortefacil/cortefacilapp/?page=diagnostico
+SCRIPT_NAME: /cortefacil/cortefacilapp/index.php
+</pre><h2>Status Final</h2><p style='color: green; font-weight: bold;'>✅ Este script está sendo executado diretamente!</p><p>Se você está vendo esta mensagem, significa que o PHP está funcionando corretamente.</p></body></html>

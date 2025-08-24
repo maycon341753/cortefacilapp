@@ -1,39 +1,51 @@
-# Configurações para Hostinger
-RewriteEngine On
+# .htaccess para Produção - Hostinger CorteFacil
+# Versão EMERGENCIAL - Força acesso direto aos arquivos
 
-# Definir charset padrão
-AddDefaultCharset UTF-8
+# DESABILITAR COMPLETAMENTE O MOD_REWRITE
+RewriteEngine Off
 
-# ATIVAR EXIBIÇÃO DE ERROS PHP (remover após debug)
-php_flag display_errors On
-php_flag display_startup_errors On
-php_value error_reporting "E_ALL"
-php_flag log_errors On
-php_value error_log "error.log"
+# Forçar o Apache a servir arquivos diretamente
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
 
-# Configurações de PHP para evitar erros 500
-php_value memory_limit 256M
-php_value max_execution_time 300
-php_value max_input_vars 3000
-php_value post_max_size 64M
-php_value upload_max_filesize 64M
+# Configuração de DirectoryIndex para evitar redirecionamentos
+DirectoryIndex index.php index.html
 
-# Configurações de segurança
-<Files "config/database.php">
-    Order Allow,Deny
-    Deny from all
+# Forçar o servidor a não fazer redirecionamentos automáticos
+<IfModule mod_alias.c>
+    # Desabilitar redirecionamentos automáticos
+    Options -MultiViews
+</IfModule>
+
+# Segurança
+<Files ~ "^\.(htaccess|htpasswd)$">
+Order allow,deny
+Deny from all
 </Files>
 
-<Files "database/schema.sql">
-    Order Allow,Deny
-    Deny from all
-</Files>
+<FilesMatch "\.(sql|log|md|txt|backup)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
 
-# Redirecionar para HTTPS (descomente se necessário)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Configurações PHP para Hostinger
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+    php_value upload_max_filesize 32M
+    php_value post_max_size 32M
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
 
-# Configurações de cache
+# Forçar tipos MIME corretos
+<IfModule mod_mime.c>
+    AddType text/html .html .htm
+    AddType application/x-httpd-php .php
+</IfModule>
+
+# Cache e compressão
 <IfModule mod_expires.c>
     ExpiresActive On
     ExpiresByType text/css "access plus 1 month"
@@ -44,7 +56,6 @@ php_value upload_max_filesize 64M
     ExpiresByType image/gif "access plus 1 month"
 </IfModule>
 
-# Compressão GZIP
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
@@ -57,8 +68,9 @@ php_value upload_max_filesize 64M
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
-# Prevenir acesso direto a arquivos PHP sensíveis
-<FilesMatch "\.(inc|conf|config)$">
-    Order Allow,Deny
-    Deny from all
-</FilesMatch>
+# Headers de segurança
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>

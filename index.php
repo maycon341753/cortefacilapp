@@ -4,6 +4,102 @@
  * Ponto de entrada e redirecionamento baseado no tipo de usuário
  */
 
+// SISTEMA DE ROTEAMENTO VIA PARÂMETROS PARA CONTORNAR PROBLEMA DO SERVIDOR
+// O servidor está redirecionando TODAS as requisições para index.php
+// Solução: usar parâmetros GET para acessar páginas específicas
+
+// Verificar se há uma página solicitada via parâmetro
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+    
+    // Mapeamento de páginas permitidas
+    $allowed_pages = [
+        // Páginas do parceiro
+        'parceiro_dashboard' => 'parceiro/dashboard.php',
+        'parceiro_profissionais' => 'parceiro/profissionais.php',
+        'parceiro_agendamentos' => 'parceiro/agendamentos.php',
+        'parceiro_salao' => 'parceiro/salao.php',
+        'parceiro_agenda' => 'parceiro/agenda.php',
+        'parceiro_relatorios' => 'parceiro/relatorios.php',
+        
+        // Páginas do cliente
+        'cliente_dashboard' => 'cliente/dashboard.php',
+        'cliente_agendamentos' => 'cliente/agendamentos.php',
+        'cliente_agendar' => 'cliente/agendar.php',
+        'cliente_saloes' => 'cliente/saloes.php',
+        'cliente_perfil' => 'cliente/perfil.php',
+        
+        // Páginas do admin
+        'admin_dashboard' => 'admin/dashboard.php',
+        'admin_usuarios' => 'admin/usuarios.php',
+        'admin_saloes' => 'admin/saloes.php',
+        'admin_agendamentos' => 'admin/agendamentos.php',
+        'admin_relatorios' => 'admin/relatorios.php',
+        
+        // Páginas gerais
+        'login' => 'login.php',
+        'cadastro' => 'cadastro.php',
+        'logout' => 'logout.php',
+        
+        // Páginas de teste
+         'teste_simples' => 'teste_simples.php',
+         'diagnostico' => 'diagnostico_servidor.php',
+         'teste_profissionais' => 'teste_profissionais_simples.php'
+    ];
+    
+    // Verificar se a página é permitida
+    if (array_key_exists($page, $allowed_pages)) {
+        $file_path = __DIR__ . '/' . $allowed_pages[$page];
+        
+        // Verificar se o arquivo existe
+        if (file_exists($file_path) && is_file($file_path)) {
+            // Limpar qualquer output anterior
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // Incluir o arquivo solicitado
+            include $file_path;
+            exit();
+        } else {
+            // Arquivo não encontrado
+            header('HTTP/1.0 404 Not Found');
+            echo "<h1>Página não encontrada</h1>";
+            echo "<p>O arquivo solicitado não existe: $file_path</p>";
+            exit();
+        }
+    } else {
+        // Página não permitida
+        header('HTTP/1.0 403 Forbidden');
+        echo "<h1>Acesso negado</h1>";
+        echo "<p>Página não permitida: $page</p>";
+        exit();
+    }
+}
+
+// Debug de roteamento
+if (isset($_GET['debug_routing'])) {
+    header('Content-Type: text/html; charset=utf-8');
+    echo "<h1>🔧 Debug de Roteamento CorteFácil</h1>";
+    echo "<h2>Informações da Requisição</h2>";
+    echo "<pre>";
+    echo "REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "\n";
+    echo "SCRIPT_NAME: " . ($_SERVER['SCRIPT_NAME'] ?? 'N/A') . "\n";
+    echo "PHP_SELF: " . ($_SERVER['PHP_SELF'] ?? 'N/A') . "\n";
+    echo "SCRIPT_FILENAME: " . ($_SERVER['SCRIPT_FILENAME'] ?? 'N/A') . "\n";
+    echo "</pre>";
+    
+    echo "<h2>Como usar o sistema de roteamento</h2>";
+    echo "<p>Devido a problemas de configuração do servidor, use os seguintes links:</p>";
+    echo "<ul>";
+    echo "<li><a href='?page=parceiro_profissionais'>Profissionais (Parceiro)</a></li>";
+    echo "<li><a href='?page=parceiro_dashboard'>Dashboard (Parceiro)</a></li>";
+    echo "<li><a href='?page=teste_simples'>Teste Simples</a></li>";
+    echo "<li><a href='?page=diagnostico'>Diagnóstico do Servidor</a></li>";
+    echo "</ul>";
+    exit();
+}
+
 // Definir charset UTF-8
 header('Content-Type: text/html; charset=utf-8');
 
@@ -38,7 +134,7 @@ if (isLoggedIn()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CorteFácil - Sistema de Agendamentos para Salões</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
 </head>
 <body>

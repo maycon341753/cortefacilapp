@@ -4,11 +4,29 @@
  * Exibe estatísticas e relatórios do salão
  */
 
-require_once '../includes/auth.php';
-require_once '../includes/functions.php';
-require_once '../models/salao.php';
-require_once '../models/agendamento.php';
-require_once '../models/profissional.php';
+// ===== FORÇAR CONEXÃO ONLINE PARA PRODUÇÃO =====
+try {
+    // Verificar se estamos em produção e forçar conexão online
+    $serverName = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? '';
+    if (strpos($serverName, 'cortefacil.app') !== false || file_exists(__DIR__ . '/../.env.online')) {
+        require_once __DIR__ . '/../config/database.php';
+        $db = Database::getInstance();
+        $db->forceOnlineConfig();
+        $conn = $db->connect();
+        if (!$conn) {
+            throw new Exception('Falha na conexão online forçada');
+        }
+        error_log('Relatorios: Conexão online forçada com sucesso');
+    }
+} catch (Exception $e) {
+    error_log('Relatorios: Erro ao forçar conexão online: ' . $e->getMessage());
+}
+
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../models/salao.php';
+require_once __DIR__ . '/../models/agendamento.php';
+require_once __DIR__ . '/../models/profissional.php';
 
 // Verificar se é parceiro
 requireParceiro();
@@ -150,75 +168,14 @@ $periodo_texto = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatórios - CorteFácil Parceiro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h5 class="text-white">
-                            <i class="fas fa-cut me-2"></i>
-                            CorteFácil
-                        </h5>
-                        <small class="text-white-50">Parceiro</small>
-                    </div>
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.php">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="agenda.php">
-                                <i class="fas fa-calendar-alt"></i>
-                                Agenda
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="profissionais.php">
-                                <i class="fas fa-users"></i>
-                                Profissionais
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="agendamentos.php">
-                                <i class="fas fa-list"></i>
-                                Agendamentos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="salao.php">
-                                <i class="fas fa-store"></i>
-                                Meu Salão
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="relatorios.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Relatórios
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    <hr class="text-white-50">
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="../logout.php">
-                                <i class="fas fa-sign-out-alt"></i>
-                                Sair
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include __DIR__ . '/../includes/parceiro_navigation.php'; ?>
             
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
