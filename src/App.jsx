@@ -11,29 +11,19 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
 // Pages
-import Login from './pages/Login'
-import Register from './pages/Register'
 import Home from './pages/Home'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
 
 // Dashboard Pages
 import ClienteDashboard from './pages/cliente/Dashboard'
-import ClienteAgendamentos from './pages/cliente/Agendamentos'
-import ClienteAgendar from './pages/cliente/Agendar'
-import ClienteSaloes from './pages/cliente/Saloes'
-import ClientePerfil from './pages/cliente/Perfil'
+import ClienteAgendamentos from './pages/client/Appointments'
+import ClienteAgendar from './pages/client/BookAppointment'
+import ClientePerfil from './pages/client/Profile'
 
 import ParceiroDashboard from './pages/parceiro/Dashboard'
-import ParceiroAgendamentos from './pages/parceiro/Agendamentos'
-import ParceiroProfissionais from './pages/parceiro/Profissionais'
-import ParceiroSalao from './pages/parceiro/Salao'
-import ParceiroServicos from './pages/parceiro/Servicos'
-import ParceiroRelatorios from './pages/parceiro/Relatorios'
 
 import AdminDashboard from './pages/admin/Dashboard'
-import AdminUsuarios from './pages/admin/Usuarios'
-import AdminSaloes from './pages/admin/Saloes'
-import AdminAgendamentos from './pages/admin/Agendamentos'
-import AdminRelatorios from './pages/admin/Relatorios'
 
 // Error Pages
 import NotFound from './pages/NotFound'
@@ -79,13 +69,7 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/cliente/saloes" element={
-                <ProtectedRoute allowedRoles={['cliente']}>
-                  <Layout userType="cliente">
-                    <ClienteSaloes />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+
               <Route path="/cliente/perfil" element={
                 <ProtectedRoute allowedRoles={['cliente']}>
                   <Layout userType="cliente">
@@ -109,41 +93,7 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/parceiro/agendamentos" element={
-                <ProtectedRoute allowedRoles={['parceiro']}>
-                  <Layout userType="parceiro">
-                    <ParceiroAgendamentos />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/parceiro/profissionais" element={
-                <ProtectedRoute allowedRoles={['parceiro']}>
-                  <Layout userType="parceiro">
-                    <ParceiroProfissionais />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/parceiro/salao" element={
-                <ProtectedRoute allowedRoles={['parceiro']}>
-                  <Layout userType="parceiro">
-                    <ParceiroSalao />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/parceiro/servicos" element={
-                <ProtectedRoute allowedRoles={['parceiro']}>
-                  <Layout userType="parceiro">
-                    <ParceiroServicos />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/parceiro/relatorios" element={
-                <ProtectedRoute allowedRoles={['parceiro']}>
-                  <Layout userType="parceiro">
-                    <ParceiroRelatorios />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+
               
               {/* Rotas do Admin */}
               <Route path="/admin" element={
@@ -160,34 +110,7 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/admin/usuarios" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Layout userType="admin">
-                    <AdminUsuarios />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/saloes" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Layout userType="admin">
-                    <AdminSaloes />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/agendamentos" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Layout userType="admin">
-                    <AdminAgendamentos />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/relatorios" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Layout userType="admin">
-                    <AdminRelatorios />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+
               
               {/* Página 404 */}
               <Route path="/404" element={<NotFound />} />
