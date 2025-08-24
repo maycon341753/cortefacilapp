@@ -84,7 +84,7 @@ const AdminDashboard = () => {
           icon: 'fas fa-dollar-sign',
           color: 'warning'
         }
-      ]
+      ];
       
       // Atualizar atividades recentes
       setRecentActivity(mockActivity)

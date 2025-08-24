@@ -333,7 +333,75 @@ body {
 }
 
 /* Responsividade */
-@media (max-width: 576px) {
+
+/* Mobile First - Extra Small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .card-custom {
+    margin-bottom: 0.75rem;
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .btn-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .app-header {
+    height: 60px;
+    padding: 0 0.75rem;
+  }
+  
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+  }
+  
+  /* Cards em mobile */
+  .row > [class*="col-"] {
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Tabelas em mobile */
+  .table-custom th,
+  .table-custom td {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  /* Formulários em mobile */
+  .form-control {
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+  
+  /* Modais em mobile */
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
   .container-fluid {
     padding-left: 1rem;
     padding-right: 1rem;
@@ -345,6 +413,187 @@ body {
   
   .table-responsive {
     font-size: 0.875rem;
+  }
+  
+  /* Grid responsivo para tablets pequenos */
+  .col-sm-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .app-sidebar {
+    width: 260px;
+  }
+  
+  .main-content.with-sidebar {
+    margin-left: 260px;
+  }
+  
+  /* Cards em tablet */
+  .card-body {
+    padding: 1.25rem;
+  }
+  
+  /* Tabelas em tablet */
+  .table-custom th,
+  .table-custom td {
+    padding: 0.75rem;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .container-fluid {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .container-fluid {
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  
+  .app-sidebar {
+    width: 300px;
+  }
+  
+  .main-content.with-sidebar {
+    margin-left: 300px;
+  }
+}
+
+/* Utilitários responsivos */
+.d-mobile-none {
+  display: block;
+}
+
+.d-mobile-block {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .d-mobile-none {
+    display: none !important;
+  }
+  
+  .d-mobile-block {
+    display: block !important;
+  }
+  
+  .d-mobile-flex {
+    display: flex !important;
+  }
+  
+  .text-mobile-center {
+    text-align: center !important;
+  }
+  
+  .mb-mobile-3 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .px-mobile-2 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+/* Flexbox responsivo */
+.flex-mobile-column {
+  flex-direction: row;
+}
+
+@media (max-width: 767.98px) {
+  .flex-mobile-column {
+    flex-direction: column !important;
+  }
+  
+  .flex-mobile-column > * {
+    margin-bottom: 0.5rem;
+  }
+  
+  .flex-mobile-column > *:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Grid responsivo personalizado */
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (max-width: 575.98px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Cards responsivos */
+.card-responsive {
+  transition: var(--transition);
+}
+
+@media (max-width: 767.98px) {
+  .card-responsive .card-body {
+    padding: 0.75rem;
+  }
+  
+  .card-responsive .card-title {
+    font-size: 1.1rem;
+  }
+  
+  .card-responsive .card-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* Botões responsivos */
+.btn-responsive {
+  transition: var(--transition);
+}
+
+@media (max-width: 575.98px) {
+  .btn-responsive {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .btn-group-responsive {
+    flex-direction: column;
+  }
+  
+  .btn-group-responsive .btn {
+    border-radius: var(--border-radius) !important;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Navegação responsiva */
+.nav-responsive {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+  .nav-responsive {
+    flex-direction: column;
+  }
+  
+  .nav-responsive .nav-item {
+    width: 100%;
+  }
+  
+  .nav-responsive .nav-link {
+    text-align: center;
+    padding: 0.75rem;
   }
 }
 
