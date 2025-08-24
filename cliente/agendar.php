@@ -95,6 +95,7 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
+    <!-- QR Code será gerado com implementação própria -->
     <style>
         /* Ocultar campos hidden do CSRF token */
         input[type="hidden"][name="csrf_token"] {
@@ -582,10 +583,46 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                                 </div>
                             </div>
                             <hr>
-                            <p class="mb-0">
+                            <p class="mb-2">
                                 <strong>Taxa da Plataforma:</strong> 
                                 <span class="text-success fw-bold">R$ 1,29</span>
                             </p>
+                            <div class="alert alert-warning border-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Importante:</strong> Não devolvemos o valor de R$ 1,29 caso não compareça no horário marcado.
+                            </div>
+                        </div>
+                        
+                        <!-- Área do QR Code PIX -->
+                        <div id="pixPaymentArea" style="display: none;">
+                            <div class="alert alert-info border-info">
+                                <h6><i class="fas fa-qrcode me-2"></i>Pagamento PIX</h6>
+                                <p class="mb-3">Escaneie o QR Code abaixo ou copie o código PIX para finalizar seu agendamento:</p>
+                                
+                                <div class="text-center mb-3">
+                                    <div id="qrCodeContainer" class="d-inline-block p-3 bg-white border rounded">
+                                        <!-- QR Code será gerado aqui -->
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Código PIX Copia e Cola:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="pixCode" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" id="copyPixCode">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <p class="small text-muted mb-2">Após o pagamento, seu agendamento será confirmado automaticamente.</p>
+                                    <button type="button" class="btn btn-success" id="confirmPaymentBtn">
+                                        <i class="fas fa-check me-2"></i>
+                                        Já Paguei - Confirmar Agendamento
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -599,8 +636,8 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                         <i class="fas fa-arrow-right ms-2"></i>
                     </button>
                     <button type="button" class="btn btn-success" id="modalBtnConfirmar" style="display: none;">
-                        <i class="fas fa-check me-2"></i>
-                        Confirmar Agendamento
+                        <i class="fas fa-qrcode me-2"></i>
+                        Gerar QR Code PIX
                     </button>
                 </div>
             </div>
@@ -702,12 +739,19 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
             document.querySelectorAll('.modal-step').forEach(s => s.style.display = 'none');
             
             // Mostrar etapa atual
-            document.getElementById(`modalStep${step}`).style.display = 'block';
+            const currentStepElement = document.getElementById(`modalStep${step}`);
+            if (currentStepElement) {
+                currentStepElement.style.display = 'block';
+            }
             
             // Atualizar botões
-            document.getElementById('modalBtnVoltar').style.display = step > 1 ? 'inline-block' : 'none';
-            document.getElementById('modalBtnProximo').style.display = step < 4 ? 'inline-block' : 'none';
-            document.getElementById('modalBtnConfirmar').style.display = step === 4 ? 'inline-block' : 'none';
+            const btnVoltar = document.getElementById('modalBtnVoltar');
+            const btnProximo = document.getElementById('modalBtnProximo');
+            const btnConfirmar = document.getElementById('modalBtnConfirmar');
+            
+            if (btnVoltar) btnVoltar.style.display = step > 1 ? 'inline-block' : 'none';
+            if (btnProximo) btnProximo.style.display = step < 4 ? 'inline-block' : 'none';
+            if (btnConfirmar) btnConfirmar.style.display = step === 4 ? 'inline-block' : 'none';
         }
         
         function carregarProfissionaisModal(salaoId) {
@@ -751,7 +795,10 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                 
                 // Selecionar atual
                 card.querySelector('.professional-card').classList.add('selected');
-                modalSelectedProfessional = prof;
+                modalSelectedProfessional = {
+                    id: prof.id,
+                    name: prof.nome
+                };
             });
             
             return card;
@@ -827,10 +874,13 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                     modalSelectedDate = e.target.dataset.date;
                     
                     // Atualizar display da data selecionada
-                    document.getElementById('selectedDateDisplay').innerHTML = `
-                        <i class="fas fa-calendar me-2"></i>
-                        ${formatDateBR(modalSelectedDate)}
-                    `;
+                    const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+                    if (selectedDateDisplay) {
+                        selectedDateDisplay.innerHTML = `
+                            <i class="fas fa-calendar me-2"></i>
+                            ${formatDateBR(modalSelectedDate)}
+                        `;
+                    }
                 }
             });
         }
@@ -1022,66 +1072,7 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
             modalBtnConfirmar.style.display = modalCurrentStep === 4 ? 'inline-block' : 'none';
         }
 
-        function carregarProfissionaisModal(salonId) {
-            const grid = document.getElementById('profissionaisGrid');
-            const loading = document.getElementById('loadingProfissionais');
-            
-            loading.style.display = 'block';
-            grid.innerHTML = '';
-            
-            fetch('../api/profissionais.php?salao_id=' + salonId)
-                .then(response => response.json())
-                .then(data => {
-                    loading.style.display = 'none';
-                    
-                    if (data.success && data.profissionais.length > 0) {
-                        data.profissionais.forEach(prof => {
-                            const card = createProfissionalCard(prof);
-                            grid.appendChild(card);
-                        });
-                    } else {
-                        grid.innerHTML = '<div class="col-12"><div class="alert alert-warning">Nenhum profissional disponível neste salão.</div></div>';
-                    }
-                })
-                .catch(error => {
-                    loading.style.display = 'none';
-                    grid.innerHTML = '<div class="col-12"><div class="alert alert-danger">Erro ao carregar profissionais.</div></div>';
-                });
-        }
 
-        function createProfissionalCard(prof) {
-            const col = document.createElement('div');
-            col.className = 'col-md-6';
-            
-            col.innerHTML = `
-                <div class="card profissional-card h-100" data-prof-id="${prof.id}" data-prof-name="${prof.nome}">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-user-tie text-primary" style="font-size: 2rem;"></i>
-                        </div>
-                        <h6 class="card-title">${prof.nome}</h6>
-                        <p class="text-muted small mb-0">${prof.especialidade || 'Profissional'}</p>
-                    </div>
-                </div>
-            `;
-            
-            col.addEventListener('click', function() {
-                // Remover seleção anterior
-                document.querySelectorAll('.profissional-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                
-                // Selecionar atual
-                col.querySelector('.profissional-card').classList.add('selected');
-                
-                modalSelectedProfessional = {
-                    id: prof.id,
-                    name: prof.nome
-                };
-            });
-            
-            return col;
-        }
 
         function showModalStep2() {
             document.querySelectorAll('.modal-step').forEach(step => step.style.display = 'none');
@@ -1175,10 +1166,13 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
                     modalSelectedDate = e.target.dataset.date;
                     
                     // Atualizar display da data selecionada
-                    document.getElementById('selectedDateDisplay').innerHTML = `
-                        <i class="fas fa-calendar me-2"></i>
-                        ${formatDateBR(modalSelectedDate)}
-                    `;
+                    const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+                    if (selectedDateDisplay) {
+                        selectedDateDisplay.innerHTML = `
+                            <i class="fas fa-calendar me-2"></i>
+                            ${formatDateBR(modalSelectedDate)}
+                        `;
+                    }
                 }
             });
         }
@@ -1186,17 +1180,130 @@ $salao_selecionado = isset($_GET['salao']) ? (int)$_GET['salao'] : null;
 
 
         function confirmarAgendamentoModal() {
+            // Esconder o botão de gerar QR Code e mostrar a área de pagamento PIX
+            document.getElementById('modalBtnConfirmar').style.display = 'none';
+            document.getElementById('pixPaymentArea').style.display = 'block';
+            
+            // Gerar QR Code PIX
+            gerarQRCodePIX();
+        }
+        
+        function gerarQRCodePIX() {
+            // Dados do agendamento para o PIX
+            const dadosAgendamento = {
+                salao: modalSelectedSalon.name,
+                profissional: modalSelectedProfessional.name,
+                data: formatDateBR(modalSelectedDate),
+                hora: modalSelectedTime,
+                valor: 1.29
+            };
+            
+            // Simular geração de código PIX (em produção, isso seria feito no backend)
+            const pixCode = gerarCodigoPIX(dadosAgendamento);
+            
+            // Exibir código PIX
+            const pixCodeElement = document.getElementById('pixCode');
+            if (pixCodeElement) {
+                pixCodeElement.value = pixCode;
+            }
+            
+            // Gerar representação visual do QR Code
+             const qrContainer = document.getElementById('qrCodeContainer');
+             if (qrContainer) {
+                 qrContainer.innerHTML = '';
+                 
+                 // Criar representação visual simples do QR Code
+                 const qrDisplay = document.createElement('div');
+                 qrDisplay.style.cssText = `
+                     width: 200px;
+                     height: 200px;
+                     background: #000;
+                     color: #fff;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center;
+                     text-align: center;
+                     font-size: 12px;
+                     padding: 10px;
+                     box-sizing: border-box;
+                     border: 2px solid #000;
+                     position: relative;
+                 `;
+                 
+                 // Adicionar padrão visual de QR Code
+                 qrDisplay.innerHTML = `
+                     <div style="position: absolute; top: 5px; left: 5px; width: 30px; height: 30px; background: #fff;"></div>
+                     <div style="position: absolute; top: 5px; right: 5px; width: 30px; height: 30px; background: #fff;"></div>
+                     <div style="position: absolute; bottom: 5px; left: 5px; width: 30px; height: 30px; background: #fff;"></div>
+                     <div style="color: #fff; font-weight: bold; z-index: 1;">QR CODE PIX<br><small>R$ 1,29</small></div>
+                 `;
+                 
+                 qrContainer.appendChild(qrDisplay);
+             }
+            
+            // Configurar botão de copiar
+             const copyBtn = document.getElementById('copyPixCode');
+             if (copyBtn) {
+                 copyBtn.addEventListener('click', function() {
+                     navigator.clipboard.writeText(pixCode).then(function() {
+                         // Feedback visual
+                         const btn = document.getElementById('copyPixCode');
+                         if (btn) {
+                             const originalText = btn.innerHTML;
+                             btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                             btn.classList.add('btn-success');
+                             btn.classList.remove('btn-outline-secondary');
+                             
+                             setTimeout(function() {
+                                 btn.innerHTML = originalText;
+                                 btn.classList.remove('btn-success');
+                                 btn.classList.add('btn-outline-secondary');
+                             }, 2000);
+                         }
+                     }).catch(function(err) {
+                         console.error('Erro ao copiar:', err);
+                         alert('Erro ao copiar código PIX');
+                     });
+                 });
+             }
+             
+             // Configurar botão de confirmação de pagamento
+             const confirmBtn = document.getElementById('confirmPaymentBtn');
+             if (confirmBtn) {
+                 confirmBtn.addEventListener('click', function() {
+                     finalizarAgendamento();
+                 });
+             }
+        }
+        
+        function gerarCodigoPIX(dados) {
+            // Em produção, isso seria feito no backend com uma API de pagamento real
+            // Por enquanto, vamos simular um código PIX
+            const timestamp = Date.now();
+            const hash = btoa(JSON.stringify(dados) + timestamp).substring(0, 20);
+            return `00020126580014BR.GOV.BCB.PIX0136${hash}@cortefacil.app5204000053039865802BR5913CorteFacil App6009SAO PAULO62070503***6304${hash.substring(0, 4).toUpperCase()}`;
+        }
+        
+        function finalizarAgendamento() {
+            // Mostrar loading
+            const btn = document.getElementById('confirmPaymentBtn');
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>Processando...';
+            btn.disabled = true;
+            
             // Preencher formulário principal com os dados selecionados
             document.getElementById('id_salao').value = modalSelectedSalon.id;
             document.getElementById('id_profissional').value = modalSelectedProfessional.id;
             document.getElementById('data').value = modalSelectedDate;
             document.getElementById('hora').value = modalSelectedTime;
             
-            // Fechar modal
-            agendamentoModal.hide();
-            
-            // Submeter formulário
-            document.getElementById('formAgendamento').submit();
+            // Simular processamento do pagamento
+            setTimeout(function() {
+                // Fechar modal
+                agendamentoModal.hide();
+                
+                // Submeter formulário
+                document.getElementById('formAgendamento').submit();
+            }, 2000);
         }
 
         function formatDateBR(dateStr) {
