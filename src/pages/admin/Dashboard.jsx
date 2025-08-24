@@ -6,48 +6,59 @@ import { useApp } from '../../contexts/AppContext'
 const AdminDashboard = () => {
   const { user } = useAuth()
   const { formatDate, formatCurrency } = useApp()
+  const [loading, setLoading] = useState(false)
   const [stats, setStats] = useState({
-    totalUsuarios: 0,
     totalSaloes: 0,
-    agendamentosHoje: 0,
+    totalClientes: 0,
+    totalAgendamentos: 0,
     receitaTotal: 0,
-    novosUsuarios: 0,
+    agendamentosHoje: 0,
     novosSaloes: 0,
-    agendamentosMes: 0,
-    receitaMes: 0
+    novosClientes: 0,
+    taxaCancelamento: 0
   })
   const [recentActivity, setRecentActivity] = useState([])
   const [topSaloes, setTopSaloes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [chartData, setChartData] = useState({
+    agendamentosPorMes: [],
+    receitaPorMes: [],
+    saloesAtivos: []
+  })
 
   useEffect(() => {
     loadDashboardData()
   }, [])
 
   const loadDashboardData = async () => {
+    setLoading(true)
+    
     try {
-      setLoading(true)
-      // Aqui você faria as chamadas para a API
-      // Por enquanto, dados mockados
-      setStats({
-        totalUsuarios: 1247,
-        totalSaloes: 89,
-        agendamentosHoje: 156,
-        receitaTotal: 45780.00,
-        novosUsuarios: 23,
-        novosSaloes: 3,
-        agendamentosMes: 3420,
-        receitaMes: 125600.00
-      })
+      // Simular carregamento de dados
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      setRecentActivity([
+      // Mock data das estatísticas
+      const mockStats = {
+        totalSaloes: 156,
+        totalClientes: 2847,
+        totalAgendamentos: 12543,
+        receitaTotal: 89750.50,
+        agendamentosHoje: 47,
+        novosSaloes: 8,
+        novosClientes: 124,
+        taxaCancelamento: 12.5
+      }
+      
+      // Atualizar estatísticas
+      setStats(mockStats)
+      
+      // Mock data das atividades recentes
+      const mockActivity = [
         {
           id: 1,
-          tipo: 'novo_usuario',
-          descricao: 'João Silva se cadastrou como cliente',
-          tempo: '2 minutos atrás',
-          icon: 'fas fa-user-plus',
-          color: 'success'
+          tipo: 'novo_salao',
+          descricao: 'Novo salão cadastrado: "Beleza Premium"',
+          timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
+          icon: '🏪'
         },
         {
           id: 2,
@@ -73,7 +84,10 @@ const AdminDashboard = () => {
           icon: 'fas fa-dollar-sign',
           color: 'warning'
         }
-      ])
+      ]
+      
+      // Atualizar atividades recentes
+      setRecentActivity(mockActivity)
       
       setTopSaloes([
         {

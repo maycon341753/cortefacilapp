@@ -17,13 +17,23 @@ import Register from './pages/auth/Register'
 
 // Dashboard Pages
 import ClienteDashboard from './pages/cliente/Dashboard'
-import ClienteAgendamentos from './pages/client/Appointments'
-import ClienteAgendar from './pages/client/BookAppointment'
-import ClientePerfil from './pages/client/Profile'
+import ClienteAgendamentos from './pages/cliente/Agendamentos'
+import ClienteBuscarSaloes from './pages/cliente/BuscarSaloes'
+import ClienteNovoAgendamento from './pages/cliente/NovoAgendamento'
+import ClientePerfil from './pages/cliente/Perfil'
 
 import ParceiroDashboard from './pages/parceiro/Dashboard'
+import ParceiroAgendamentos from './pages/parceiro/Agendamentos'
+import ParceiroProfissionais from './pages/parceiro/Profissionais'
+import ParceiroSalao from './pages/parceiro/Salao'
+import ParceiroServicos from './pages/parceiro/Servicos'
+import ParceiroRelatorios from './pages/parceiro/Relatorios'
 
 import AdminDashboard from './pages/admin/Dashboard'
+import AdminSaloes from './pages/admin/Saloes'
+import AdminUsuarios from './pages/admin/Usuarios'
+import AdminRelatorios from './pages/admin/Relatorios'
+import AdminAgendamentos from './pages/admin/Agendamentos'
 
 // Error Pages
 import NotFound from './pages/NotFound'
@@ -62,10 +72,17 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/cliente/agendar" element={
+              <Route path="/cliente/buscar-saloes" element={
                 <ProtectedRoute allowedRoles={['cliente']}>
                   <Layout userType="cliente">
-                    <ClienteAgendar />
+                    <ClienteBuscarSaloes />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/cliente/novo-agendamento" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                  <Layout userType="cliente">
+                    <ClienteNovoAgendamento />
                   </Layout>
                 </ProtectedRoute>
               } />
@@ -93,6 +110,41 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
+              <Route path="/parceiro/agendamentos" element={
+                <ProtectedRoute allowedRoles={['parceiro']}>
+                  <Layout userType="parceiro">
+                    <ParceiroAgendamentos />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/parceiro/profissionais" element={
+                <ProtectedRoute allowedRoles={['parceiro']}>
+                  <Layout userType="parceiro">
+                    <ParceiroProfissionais />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/parceiro/salao" element={
+                <ProtectedRoute allowedRoles={['parceiro']}>
+                  <Layout userType="parceiro">
+                    <ParceiroSalao />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/parceiro/servicos" element={
+                <ProtectedRoute allowedRoles={['parceiro']}>
+                  <Layout userType="parceiro">
+                    <ParceiroServicos />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/parceiro/relatorios" element={
+                <ProtectedRoute allowedRoles={['parceiro']}>
+                  <Layout userType="parceiro">
+                    <ParceiroRelatorios />
+                  </Layout>
+                </ProtectedRoute>
+              } />
 
               
               {/* Rotas do Admin */}
@@ -107,6 +159,34 @@ function App() {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Layout userType="admin">
                     <AdminDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/saloes" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Layout userType="admin">
+                    <AdminSaloes />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/usuarios" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Layout userType="admin">
+                    <AdminUsuarios />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/relatorios" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Layout userType="admin">
+                    <AdminRelatorios />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/agendamentos" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Layout userType="admin">
+                    <AdminAgendamentos />
                   </Layout>
                 </ProtectedRoute>
               } />
