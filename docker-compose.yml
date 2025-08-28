@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cortefacil-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-cortefacil}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+    restart: unless-stopped
+    networks:
+      - cortefacil-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cortefacil-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - cortefacil-network
+
+  # MySQL Database (opcional - pode usar banco externo)
+  database:
+    image: mysql:8.0
+    container_name: cortefacil-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${DB_NAME:-cortefacil}
+      - MYSQL_USER=${DB_USER:-cortefacil_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-userpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    restart: unless-stopped
+    networks:
+      - cortefacil-network
+
+volumes:
+  db_data:
+
+networks:
+  cortefacil-network:
+    driver: bridge

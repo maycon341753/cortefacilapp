@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# Redirecionar API para Node.js
+RewriteRule ^api/(.*)$ http://localhost:3000/api/$1 [P,L]
+
+# Servir arquivos estáticos
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.html [L]
+
+# Headers de segurança
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+
+# Compressão GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/javascript
+</IfModule>

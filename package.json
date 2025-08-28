@@ -1,38 +1,32 @@
 {
-  "name": "cortefacil-app",
+  "name": "cortefacil-monorepo",
   "version": "1.0.0",
-  "description": "Sistema de Agendamentos para Salões de Beleza - CorteFácil",
-  "type": "module",
+  "description": "CorteFácil - Sistema de Agendamentos (Frontend + Backend)",
+  "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
-    "axios": "^1.5.0",
-    "bootstrap": "^5.3.0",
-    "react-bootstrap": "^2.8.0",
-    "@fortawesome/fontawesome-free": "^6.4.0",
-    "date-fns": "^2.30.0",
-    "react-datepicker": "^4.16.0",
-    "react-input-mask": "^2.0.4",
-    "react-toastify": "^9.1.3",
-    "js-cookie": "^3.0.5"
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend/server && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend/server && npm run build",
+    "build:prod": "cd frontend && npm run build:prod && cd ../scripts && node build-server.js",
+    "deploy:build": "npm run build:prod && node scripts/prepare-deploy.js",
+    "deploy:hostinger": "node deploy.js",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend/server && npm install",
+    "start:frontend": "cd frontend && npm run preview",
+    "start:backend": "cd backend/server && npm start",
+    "lint": "cd frontend && npm run lint",
+    "clean": "rimraf frontend/dist backend/server/dist dist deploy"
   },
   "devDependencies": {
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.0.3",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "vite": "^4.4.5"
+    "concurrently": "^8.2.0",
+    "rimraf": "^5.0.1"
   },
+  "workspaces": [
+    "frontend",
+    "backend/server"
+  ],
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"

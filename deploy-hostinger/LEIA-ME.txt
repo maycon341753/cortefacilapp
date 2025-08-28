@@ -1,0 +1,48 @@
+# INSTRUÇÕES DE DEPLOY - HOSTINGER
+
+## ✅ Arquivos Preparados
+- index.html (página principal)
+- server/ (backend Node.js)
+- .htaccess (configuração Apache)
+
+## 📤 COMO FAZER O DEPLOY:
+
+### 1. Upload dos Arquivos
+- Faça upload de TODOS os arquivos desta pasta para seu domínio no Painel Fácil
+- Estrutura no servidor:
+  /public_html/seudominio/
+    - index.html
+    - .htaccess
+    - server/ (pasta completa)
+
+### 2. Configurar Node.js no Painel Fácil
+- Vá em "Configurações" do seu projeto
+- Selecione "Node.js" como runtime
+- Arquivo principal: server/server.js
+- Porta: 3000
+
+### 3. Instalar Dependências
+- No terminal do Painel Fácil:
+  cd /public_html/seudominio/server
+  npm install
+
+### 4. Configurar Variáveis (Opcional)
+- Copie server/.env.template para server/.env
+- Configure com seus dados se necessário
+
+### 5. Iniciar Aplicação
+- No Painel Fácil, clique em "Iniciar"
+- Ou no terminal: node server/server.js
+
+### 6. Testar
+- Acesse: https://seudominio.com
+- API: https://seudominio.com/api/health
+
+## 🎉 Pronto!
+Seu site estará funcionando com:
+- ✅ Página principal responsiva
+- ✅ Backend Node.js
+- ✅ API básica funcionando
+
+---
+📞 Suporte: Consulte a documentação da Hostinger para mais detalhes.
