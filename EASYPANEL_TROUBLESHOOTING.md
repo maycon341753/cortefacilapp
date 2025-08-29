@@ -1,5 +1,42 @@
 # 🔧 Troubleshooting Easypanel Deploy
 
+## ❌ Erro: "failed to build: executing lifecycle: failed with status code: 51"
+
+### 🔍 Diagnóstico
+Este erro geralmente ocorre quando:
+1. O buildpack do Heroku/Node.js tenta executar scripts que não existem
+2. Dependências não estão instaladas corretamente
+3. Configuração incorreta do **Build Path** no Easypanel
+
+## ✅ Soluções Implementadas
+
+### 1. Correção do package.json
+- ✅ Removido script `build:backend` inexistente
+- ✅ Adicionado script `start` principal
+- ✅ Corrigida estrutura de scripts
+
+### 2. Arquivos de Configuração Criados
+- ✅ `.buildpacks` - Especifica buildpack Node.js
+- ✅ `Procfile` - Define como executar a aplicação
+- ✅ `app.json` - Configuração completa para deploy
+
+### 3. Próximos Passos
+1. **Commit e Push das Alterações**
+   ```bash
+   git add .
+   git commit -m "Fix: Corrigir configuração de build para EasyPanel"
+   git push origin main
+   ```
+
+2. **Rebuild no EasyPanel**
+   - Acesse o dashboard do EasyPanel
+   - Clique em "Deploy" ou "Rebuild"
+   - Aguarde o build completar
+
+3. **Verificar Logs**
+   - Se ainda houver erros, verifique os logs detalhados
+   - Certifique-se de que as variáveis de ambiente estão configuradas
+
 ## ❌ Erro: "failed to build: resolve : lstat /etc/easypanel/projects/cortefacil/cortefacil-backend/code/backend/backend"
 
 ### 🔍 Diagnóstico

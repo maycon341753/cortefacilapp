@@ -1,0 +1,56 @@
+# 🚀 INSTRUÇÕES DE DEPLOY - HOSTINGER
+
+## ✅ Arquivos Preparados
+Todos os arquivos necessários estão na pasta 'deploy/':
+
+- ✅ Frontend buildado (React)
+- ✅ Backend configurado (Node.js)
+- ✅ .htaccess configurado
+- ✅ Schema do banco de dados
+- ✅ Template de variáveis de ambiente
+
+## 📤 PRÓXIMOS PASSOS:
+
+### 1. Upload dos Arquivos
+- Faça upload de TODOS os arquivos da pasta 'deploy/' para seu domínio no Painel Fácil
+- Estrutura final no servidor:
+  /public_html/seudominio/
+    - index.html
+    - .htaccess
+    - static/ (arquivos CSS/JS)
+    - server/ (backend Node.js)
+    - database/ (schema SQL)
+
+### 2. Configurar Banco de Dados
+- No Painel Fácil, crie um banco MySQL chamado 'cortefacil'
+- Importe o arquivo 'database/schema.sql' via phpMyAdmin
+- Anote usuário e senha do banco
+
+### 3. Configurar Variáveis de Ambiente
+- Copie 'server/.env.template' para 'server/.env'
+- Configure com seus dados reais:
+  - DB_USER, DB_PASSWORD (dados do MySQL)
+  - JWT_SECRET (gere uma chave segura)
+  - FRONTEND_URL=https://cortefacil.app
+
+### 4. Instalar Dependências
+- No terminal do Painel Fácil:
+  cd /public_html/seudominio/server
+  npm install --production
+
+### 5. Iniciar Aplicação
+- Configure Node.js no Painel Fácil:
+  - Runtime: Node.js 18+
+  - Arquivo principal: server/server.js
+  - Porta: 3000
+- Inicie a aplicação
+
+### 6. Testar
+- Frontend: https://cortefacil.app
+- API: https://cortefacil.app/api/health
+
+## 🆘 Suporte
+Se precisar de ajuda, consulte o arquivo 'DEPLOY_HOSTINGER.md' para instruções detalhadas.
+
+---
+✅ **Deploy preparado com sucesso!**

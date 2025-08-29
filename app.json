@@ -1,0 +1,32 @@
+{
+  "name": "cortefacil-app",
+  "description": "CorteFácil - Sistema de Agendamentos",
+  "repository": "https://github.com/seu-usuario/cortefacil",
+  "keywords": ["nodejs", "react", "mysql", "salon", "booking"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "JWT_SECRET": {
+      "description": "JWT Secret key",
+      "generator": "secret"
+    },
+    "FRONTEND_URL": {
+      "description": "Frontend URL",
+      "value": "https://cortefacil.app"
+    },
+    "BACKEND_URL": {
+      "description": "Backend URL",
+      "value": "https://cortefacil.app/api"
+    }
+  },
+  "scripts": {
+    "postdeploy": "npm run install:all"
+  }
+}
