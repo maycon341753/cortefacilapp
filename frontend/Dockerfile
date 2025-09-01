@@ -5,14 +5,21 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Create a non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code and set ownership
+COPY --chown=nextjs:nodejs . .
+
+# Switch to non-root user
+USER nextjs
 
 # Build the application
 RUN npm run build
