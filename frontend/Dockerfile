@@ -5,18 +5,22 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Create a non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies as root
 RUN npm install
 
-# Copy source code and set ownership
-COPY --chown=nextjs:nodejs . .
+# Copy source code
+COPY . .
+
+# Fix permissions for node_modules binaries
+RUN chmod -R 755 node_modules/.bin/
+RUN chmod +x node_modules/.bin/vite
+
+# Create a non-root user and set ownership
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+RUN chown -R nextjs:nodejs /app
 
 # Switch to non-root user
 USER nextjs
