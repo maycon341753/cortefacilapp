@@ -25,7 +25,25 @@ O acesso a este recurso no servidor foi negado!
 - Permissões de arquivo incorretas
 - Diretório de build não encontrado
 
-## ✅ SOLUÇÕES PASSO A PASSO
+## ✅ SOLUÇÕES IMPLEMENTADAS
+
+### ⚠️ CORREÇÃO CRÍTICA: Configuração Inválida do Nginx
+
+**Problema:** O valor `must-revalidate` é inválido na diretiva `gzip_proxied` do Nginx.
+
+**Erro nos logs:**
+```
+nginx: [emerg] invalid value "must-revalidate" in /etc/nginx/conf.d/default.conf:11
+```
+
+**Correção aplicada:**
+```nginx
+# ANTES (INCORRETO)
+gzip_proxied expired no-cache no-store private must-revalidate auth;
+
+# DEPOIS (CORRETO)
+gzip_proxied expired no-cache no-store private auth;
+```
 
 ### Passo 1: Verificar Status do Serviço
 
@@ -56,37 +74,64 @@ O acesso a este recurso no servidor foi negado!
 O arquivo `frontend/Dockerfile` deve estar assim:
 
 ```dockerfile
+# Multi-stage build for React frontend
+
 # Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies as root
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build the app
+# Fix permissions for node_modules binaries
+RUN chmod -R 755 node_modules/.bin/
+RUN chmod +x node_modules/.bin/vite
+
+# Create a non-root user and set ownership
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
+USER nextjs
+
+# Build the application
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy built app
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port
+# Copy built files from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Set proper permissions
+RUN chmod -R 755 /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
+# Create nginx user if not exists
+RUN addgroup -g 101 -S nginx || true
+RUN adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx || true
+
+# Expose port 80
 EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
 
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
@@ -95,39 +140,42 @@ CMD ["nginx", "-g", "daemon off;"]
 O arquivo `frontend/nginx.conf` deve conter:
 
 ```nginx
-events {
-    worker_connections 1024;
-}
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html index.htm;
 
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-    
-    sendfile        on;
-    keepalive_timeout  65;
-    
-    server {
-        listen 80;
-        server_name _;
-        root /usr/share/nginx/html;
-        index index.html;
-        
-        # Handle client-side routing
-        location / {
-            try_files $uri $uri/ /index.html;
-        }
-        
-        # Security headers
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        
-        # Cache static assets
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
+    # Enable gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied expired no-cache no-store private must-revalidate auth;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/javascript;
+
+    # Handle client routing, return all requests to index.html
+    location / {
+        try_files $uri $uri/ /index.html;
     }
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline' 'unsafe-eval'" always;
+
+    # Hide nginx version
+    server_tokens off;
+
+    # Error pages
+    error_page 404 /index.html;
 }
 ```
 
