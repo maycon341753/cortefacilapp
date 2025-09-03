@@ -51,9 +51,13 @@ RUN adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g ngi
 # Expose port 80
 EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+# Install curl for health checks (if needed)
+RUN apk add --no-cache curl
 
-# Start nginx
+# Health check with curl instead of wget
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
+
+# Start nginx with proper signal handling
+STOPSIGNAL SIGTERM
 CMD ["nginx", "-g", "daemon off;"]
