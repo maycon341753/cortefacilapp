@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 const path = require('path');
 const Database = require('./config/database');
+const { initializeDatabase } = require('./scripts/init-database');
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -15,8 +16,23 @@ const PORT = process.env.PORT || 3001;
 const db = Database.getInstance();
 db.createPool();
 
+// Configuração CORS para aceitar requisições do Vercel e outros domínios
+const corsOptions = {
+    origin: [
+        'http://localhost:5173', // Desenvolvimento local
+        'http://localhost:3000', // Desenvolvimento alternativo
+        'https://cortefacil.app', // Domínio principal
+        'https://www.cortefacil.app', // Domínio com www
+        'https://cortefacil.vercel.app', // Vercel deploy
+        ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : [])
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Middleware para tratar erros de JSON malformado
 app.use(express.json({ 
@@ -112,12 +128,31 @@ app.use('*', (req, res) => {
     res.status(404).json({ error: 'Endpoint não encontrado' });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor API rodando na porta ${PORT}`);
-    console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 URL: http://localhost:${PORT}`);
-});
+// Função para iniciar o servidor
+async function startServer() {
+    try {
+        // Inicializar banco de dados automaticamente
+        console.log('🔧 Inicializando banco de dados...');
+        await initializeDatabase();
+        console.log('✅ Banco de dados inicializado com sucesso!');
+        
+        // Iniciar servidor
+        app.listen(PORT, () => {
+            console.log(`🚀 Servidor API rodando na porta ${PORT}`);
+            console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`🔗 URL: http://localhost:${PORT}`);
+            console.log('🎉 Sistema pronto para uso!');
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao inicializar sistema:', error.message);
+        console.error('💡 Dica: Verifique se o banco MySQL está rodando e as credenciais estão corretas');
+        process.exit(1);
+    }
+}
+
+// Iniciar o sistema
+startServer();
 
 // Tratamento de erros não capturados
 process.on('unhandledRejection', (reason, promise) => {
