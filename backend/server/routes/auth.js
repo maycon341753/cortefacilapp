@@ -86,6 +86,27 @@ const authSchemas = {
         'string.max': 'Nova senha deve ter no máximo 100 caracteres',
         'any.required': 'Nova senha é obrigatória'
       })
+  }),
+
+  forgotPassword: Joi.object({
+    email: Joi.string().email().required()
+      .messages({
+        'string.email': 'Email deve ter um formato válido',
+        'any.required': 'Email é obrigatório'
+      })
+  }),
+
+  resetPassword: Joi.object({
+    token: Joi.string().required()
+      .messages({
+        'any.required': 'Token é obrigatório'
+      }),
+    newPassword: Joi.string().min(6).max(100).required()
+      .messages({
+        'string.min': 'Nova senha deve ter pelo menos 6 caracteres',
+        'string.max': 'Nova senha deve ter no máximo 100 caracteres',
+        'any.required': 'Nova senha é obrigatória'
+      })
   })
 };
 
@@ -363,6 +384,109 @@ router.get('/verify-token', authenticateToken, (req, res) => {
       user: req.user
     }
   });
+});
+
+// POST /api/auth/forgot-password - Solicitar redefinição de senha
+router.post('/forgot-password', validate(authSchemas.forgotPassword), async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Verificar se o usuário existe
+    const users = await db.query(
+      'SELECT id, nome, email FROM usuarios WHERE email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      // Por segurança, sempre retornar sucesso mesmo se o email não existir
+      return res.json({
+        success: true,
+        message: 'Se o email estiver cadastrado, você receberá as instruções para redefinir sua senha.'
+      });
+    }
+
+    const user = users[0];
+
+    // Gerar token único
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 3600000); // 1 hora
+
+    // Salvar token no banco de dados
+    await db.query(
+      'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)',
+      [email, resetToken, expiresAt]
+    );
+
+    // Em um ambiente real, aqui você enviaria um email
+    // Por enquanto, vamos apenas retornar o token para teste
+    console.log(`Token de redefinição para ${email}: ${resetToken}`);
+    console.log(`Link de redefinição: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/redefinir-senha?token=${resetToken}`);
+
+    res.json({
+      success: true,
+      message: 'Se o email estiver cadastrado, você receberá as instruções para redefinir sua senha.',
+      // Em produção, remover esta linha:
+      resetToken: resetToken // Apenas para desenvolvimento
+    });
+
+  } catch (error) {
+    console.error('Erro ao solicitar redefinição de senha:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// POST /api/auth/reset-password - Redefinir senha com token
+router.post('/reset-password', validate(authSchemas.resetPassword), async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Buscar token válido
+    const resetRequests = await db.query(
+      'SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW() AND used = FALSE',
+      [token]
+    );
+
+    if (resetRequests.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      });
+    }
+
+    const resetRequest = resetRequests[0];
+
+    // Hash da nova senha
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Atualizar senha do usuário
+    await db.query(
+      'UPDATE usuarios SET senha = ?, updated_at = NOW() WHERE email = ?',
+      [hashedPassword, resetRequest.email]
+    );
+
+    // Marcar token como usado
+    await db.query(
+      'UPDATE password_resets SET used = TRUE, updated_at = NOW() WHERE id = ?',
+      [resetRequest.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Senha redefinida com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao redefinir senha:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
 });
 
 module.exports = router;

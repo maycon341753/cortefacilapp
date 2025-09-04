@@ -159,17 +159,17 @@ const authService = {
     }
   },
 
-  // Resetar senha
+  // Redefinir senha com token
   async resetPassword(token, newPassword) {
     try {
       const response = await api.post('/auth/reset-password', {
         token,
-        new_password: newPassword
+        newPassword
       })
       
       return response.data
     } catch (error) {
-      console.error('Erro ao resetar senha:', error)
+      console.error('Erro ao redefinir senha:', error)
       throw error
     }
   },

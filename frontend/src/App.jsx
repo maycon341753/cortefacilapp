@@ -14,6 +14,8 @@ import Layout from './components/Layout'
 import Home from './pages/Home'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 // Dashboard Pages
 import ClienteDashboard from './pages/cliente/Dashboard'
@@ -51,6 +53,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/auth/esqueci-senha" element={<ForgotPassword />} />
+              <Route path="/auth/redefinir-senha" element={<ResetPassword />} />
               
               {/* Rotas do Cliente */}
               <Route path="/cliente" element={
