@@ -1,8 +1,8 @@
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
-// Carregar variáveis de ambiente
-dotenv.config({ path: './backend/server/.env' });
+// Carregar variáveis de ambiente do EasyPanel
+dotenv.config({ path: './backend/server/.env.easypanel' });
 
 async function testDatabaseConnection() {
     console.log('🔍 Testando conexão com o banco de dados...');

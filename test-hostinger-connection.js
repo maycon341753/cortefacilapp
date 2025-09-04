@@ -33,7 +33,7 @@ const testConnection = async (config) => {
     const connection = await mysql.createConnection({
       host: config.host,
       port: config.port,
-      user: process.env.DB_USER || 'mayconwender',
+      user: process.env.DB_USER || 'u690889028_mayconwender',
       password: process.env.DB_PASSWORD || 'Maycon341753@',
       database: process.env.DB_NAME || 'u690889028_cortefacil',
       connectTimeout: 10000,
@@ -71,7 +71,7 @@ const testConnection = async (config) => {
 const testAllConfigurations = async () => {
   console.log('🚀 Testando diferentes configurações de host do Hostinger...');
   console.log('📋 Credenciais:');
-  console.log(`   User: ${process.env.DB_USER || 'mayconwender'}`);
+  console.log(`   User: ${process.env.DB_USER || 'u690889028_mayconwender'}`);
   console.log(`   Database: ${process.env.DB_NAME || 'u690889028_cortefacil'}`);
   console.log(`   Password: [${process.env.DB_PASSWORD ? 'DEFINIDA' : 'NÃO DEFINIDA'}]`);
   

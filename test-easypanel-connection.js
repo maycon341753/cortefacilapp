@@ -1,12 +1,20 @@
 const mysql = require('mysql2/promise');
 
-// Configurações do EasyPanel conforme mostrado na imagem
+// Configurações do EasyPanel MySQL - Credenciais atualizadas
 const configs = [
+  {
+    name: 'Host EasyPanel (srv973908.hstgr.cloud)',
+    host: 'srv973908.hstgr.cloud',
+    port: 3306,
+    user: 'u690889028_mayconwender',
+    password: 'Maycon341753@',
+    database: 'u690889028_cortefacil'
+  },
   {
     name: 'Host Interno (EasyPanel)',
     host: 'cortefacil_cortefacil_user',
     port: 3306,
-    user: 'mayconwender',
+    user: 'u690889028_mayconwender',
     password: 'Maycon341753@',
     database: 'u690889028_cortefacil'
   },
@@ -14,15 +22,7 @@ const configs = [
     name: 'Localhost (se estiver rodando localmente)',
     host: 'localhost',
     port: 3306,
-    user: 'mayconwender',
-    password: 'Maycon341753@',
-    database: 'u690889028_cortefacil'
-  },
-  {
-    name: 'Host Externo (se disponível)',
-    host: '127.0.0.1',
-    port: 3306,
-    user: 'mayconwender',
+    user: 'u690889028_mayconwender',
     password: 'Maycon341753@',
     database: 'u690889028_cortefacil'
   }
