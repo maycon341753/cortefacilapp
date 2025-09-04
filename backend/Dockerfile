@@ -16,6 +16,10 @@ RUN npm install --production
 # Copy application code
 COPY server/ .
 
+# Copy SSH tunnel setup script and fix line endings
+COPY server/ssh-tunnel-setup.sh ./
+RUN apk add --no-cache dos2unix && dos2unix ssh-tunnel-setup.sh && chmod +x ssh-tunnel-setup.sh
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
@@ -30,10 +34,6 @@ EXPOSE 3001
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node healthcheck.js || exit 1
-
-# Copy SSH tunnel setup script
-COPY server/ssh-tunnel-setup.sh ./
-RUN apk add --no-cache dos2unix && dos2unix ssh-tunnel-setup.sh && chmod +x ssh-tunnel-setup.sh
 
 # Start the application with SSH tunnel
 CMD ["sh", "-c", "./ssh-tunnel-setup.sh && npm start"]
