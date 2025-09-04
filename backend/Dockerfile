@@ -33,7 +33,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Copy SSH tunnel setup script
 COPY server/ssh-tunnel-setup.sh ./
-RUN chmod +x ssh-tunnel-setup.sh
+RUN apk add --no-cache dos2unix && dos2unix ssh-tunnel-setup.sh && chmod +x ssh-tunnel-setup.sh
 
 # Start the application with SSH tunnel
 CMD ["sh", "-c", "./ssh-tunnel-setup.sh && npm start"]
