@@ -16,9 +16,7 @@ RUN npm install --production
 # Copy application code
 COPY server/ .
 
-# Copy SSH tunnel setup script and fix line endings
-COPY server/ssh-tunnel-setup.sh ./
-RUN apk add --no-cache dos2unix && dos2unix ssh-tunnel-setup.sh && chmod +x ssh-tunnel-setup.sh
+# Remove SSH tunnel setup as direct connection is working
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -35,5 +33,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node healthcheck.js || exit 1
 
-# Start the application with SSH tunnel
-CMD ["sh", "-c", "./ssh-tunnel-setup.sh && npm start"]
+# Start the application directly
+CMD ["npm", "start"]
