@@ -198,7 +198,7 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Iniciar transação
-    await db.query('START TRANSACTION');
+    await db.simpleQuery('START TRANSACTION');
 
     try {
       let salao_id = null;
@@ -221,7 +221,7 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
       const userId = userResult.insertId;
 
       // Commit da transação
-      await db.query('COMMIT');
+      await db.simpleQuery('COMMIT');
 
       // Gerar token JWT
       const token = jwt.sign(
@@ -250,7 +250,7 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
 
     } catch (error) {
       // Rollback em caso de erro
-      await db.query('ROLLBACK');
+      await db.simpleQuery('ROLLBACK');
       throw error;
     }
 

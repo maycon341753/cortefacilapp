@@ -163,7 +163,21 @@ const Register = () => {
     showLoading()
 
     try {
-      await register(formData)
+      // Mapear campos do frontend para o formato do backend
+      const backendData = {
+        nome: formData.nome,
+        email: formData.email,
+        password: formData.senha, // Mapear 'senha' para 'password'
+        telefone: formData.telefone,
+        tipo: formData.tipoUsuario, // Mapear 'tipoUsuario' para 'tipo'
+        // Campos específicos para parceiros
+        ...(formData.tipoUsuario === 'parceiro' && {
+          nome_salao: formData.nomeSalao,
+          endereco: `${formData.endereco}, ${formData.cidade} - ${formData.estado}, CEP: ${formData.cep}`
+        })
+      }
+      
+      await register(backendData)
       toast.success('Cadastro realizado com sucesso! Faça login para continuar.')
       navigate('/auth/login')
     } catch (error) {

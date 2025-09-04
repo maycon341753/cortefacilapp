@@ -64,6 +64,30 @@ class Database {
         }
     }
 
+    // Executar query simples sem prepared statements (para transações)
+    async simpleQuery(sql) {
+        const mysql = require('mysql2/promise');
+        let connection;
+        try {
+            // Criar conexão direta para evitar prepared statements
+            connection = await mysql.createConnection({
+                host: this.config.host,
+                user: this.config.user,
+                password: this.config.password,
+                database: this.config.database
+            });
+            const result = await connection.query(sql);
+            return result;
+        } catch (error) {
+            console.error('❌ Erro na query simples:', error);
+            throw error;
+        } finally {
+            if (connection) {
+                await connection.end();
+            }
+        }
+    }
+
     // Executar query com resultado único
     async queryOne(sql, params = []) {
         const rows = await this.query(sql, params);
