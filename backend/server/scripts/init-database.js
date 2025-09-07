@@ -64,10 +64,11 @@ class DatabaseInitializer {
             
             try {
                 // Criar banco se não existir (usando query simples)
-                await connection.query('CREATE DATABASE IF NOT EXISTS cortefacil');
-                await connection.query('USE cortefacil');
+                const dbName = process.env.DB_NAME || 'cortefacil';
+                await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+                await connection.query(`USE \`${dbName}\``);
                 
-                console.log('✅ Banco de dados "cortefacil" pronto');
+                console.log(`✅ Banco de dados "${dbName}" pronto`);
             } finally {
                 connection.release();
             }

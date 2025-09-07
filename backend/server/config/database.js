@@ -1,7 +1,8 @@
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
-dotenv.config();
+// Usar .env.easypanel para conexão com banco remoto
+dotenv.config({ path: '.env.easypanel' });
 
 class Database {
     constructor() {

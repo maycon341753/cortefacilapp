@@ -7,7 +7,8 @@ const Database = require('./config/database');
 const { initializeDatabase } = require('./scripts/init-database');
 
 // Carregar variáveis de ambiente
-dotenv.config();
+// Usar .env.easypanel para conexão com banco remoto
+dotenv.config({ path: '.env.easypanel' });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
