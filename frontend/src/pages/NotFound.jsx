@@ -72,7 +72,7 @@ const NotFound = () => {
                       </Link>
                     </div>
                     <div>
-                      <Link to="/auth/register" className="w-full px-4 py-3 border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white rounded-lg font-medium transition duration-200 inline-block text-center">
+                      <Link to="/register" className="w-full px-4 py-3 border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white rounded-lg font-medium transition duration-200 inline-block text-center">
                         <i className="fas fa-user-plus mr-2"></i>
                         Criar Conta
                       </Link>

@@ -212,7 +212,7 @@ const Login = () => {
               <p className="text-gray-600 mb-0">
                 Não tem uma conta?
                 <Link 
-                  to="/auth/register" 
+                  to="/register" 
                   className="text-blue-600 hover:text-blue-800 font-medium ml-1"
                 >
                   Cadastre-se aqui
