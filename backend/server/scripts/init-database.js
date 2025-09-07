@@ -4,7 +4,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // Carregar variáveis de ambiente
-dotenv.config();
+// Usar .env.easypanel para conexão com banco remoto
+dotenv.config({ path: '.env.easypanel' });
 
 /**
  * Script para inicializar o banco de dados automaticamente
