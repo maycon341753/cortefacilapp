@@ -25,6 +25,8 @@ const corsOptions = {
         'https://cortefacil.app', // Domínio principal
         'https://www.cortefacil.app', // Domínio com www
         'https://cortefacil.vercel.app', // Vercel deploy
+        'https://cortefacilapp-frontend-maycon341753-projects.vercel.app', // Vercel deploy específico
+        'https://cortefacil.7ebsu.easypanel.host', // EasyPanel frontend
         ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : [])
     ],
     credentials: true,

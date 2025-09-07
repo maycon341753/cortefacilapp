@@ -203,22 +203,22 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
     try {
       let salao_id = null;
 
-      // Se for parceiro, criar o salão primeiro
-      if (tipo === 'parceiro') {
-        const salaoResult = await db.query(
-          'INSERT INTO saloes (id_dono, nome, endereco, telefone, descricao) VALUES (?, ?, ?, ?, ?)',
-          [0, nome_salao, endereco, telefone, 'Salão cadastrado automaticamente']
-        );
-        salao_id = salaoResult.insertId;
-      }
-
-      // Criar o usuário
+      // Criar o usuário primeiro
       const userResult = await db.query(
         'INSERT INTO usuarios (nome, email, senha, telefone, tipo_usuario) VALUES (?, ?, ?, ?, ?)',
         [nome, email, hashedPassword, telefone, tipo]
       );
 
       const userId = userResult.insertId;
+
+      // Se for parceiro, criar o salão após criar o usuário
+      if (tipo === 'parceiro') {
+        const salaoResult = await db.query(
+          'INSERT INTO saloes (id_dono, nome, endereco, telefone, descricao) VALUES (?, ?, ?, ?, ?)',
+          [userId, nome_salao, endereco, telefone, 'Salão cadastrado automaticamente']
+        );
+        salao_id = salaoResult.insertId;
+      }
 
       // Commit da transação
       await db.simpleQuery('COMMIT');

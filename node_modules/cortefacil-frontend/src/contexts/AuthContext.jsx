@@ -88,9 +88,20 @@ export const AuthProvider = ({ children }) => {
       setLoading(true)
       const response = await authService.register(userData)
       
-      if (response.success) {
-        toast.success('Cadastro realizado com sucesso! Faça login para continuar.')
-        return { success: true }
+      if (response.success && response.data) {
+        // Fazer login automático após registro bem-sucedido
+        const { token, user } = response.data
+        
+        // Salvar token nos cookies
+        Cookies.set('auth_token', token, { expires: 7 })
+        
+        // Salvar dados do usuário
+        setUser(user)
+        setIsAuthenticated(true)
+        localStorage.setItem('user_data', JSON.stringify(user))
+        
+        toast.success('Cadastro realizado com sucesso! Bem-vindo(a)!')
+        return { success: true, user }
       } else {
         toast.error(response.message || 'Erro ao fazer cadastro')
         return { success: false, message: response.message }

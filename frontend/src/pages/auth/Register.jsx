@@ -177,9 +177,21 @@ const Register = () => {
         })
       }
       
-      await register(backendData)
-      toast.success('Cadastro realizado com sucesso! Faça login para continuar.')
-      navigate('/auth/login')
+      const result = await register(backendData)
+      
+      if (result.success && result.user) {
+        // Redirecionar baseado no tipo de usuário
+        const userType = result.user.tipo
+        
+        if (userType === 'cliente') {
+          navigate('/cliente/dashboard', { replace: true })
+        } else if (userType === 'parceiro') {
+          navigate('/parceiro/dashboard', { replace: true })
+        } else {
+          // Fallback para dashboard genérico
+          navigate('/dashboard', { replace: true })
+        }
+      }
     } catch (error) {
       console.error('Erro no cadastro:', error)
       toast.error(error.message || 'Erro ao realizar cadastro. Tente novamente.')
