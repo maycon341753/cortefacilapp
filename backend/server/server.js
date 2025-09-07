@@ -55,23 +55,9 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
-// Configuração do banco de dados
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'cortefacil',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-
-// Pool de conexões
-const pool = mysql.createPool(dbConfig);
-
-// Middleware para disponibilizar o pool nas rotas
+// Middleware para disponibilizar o Database singleton nas rotas
 app.use((req, res, next) => {
-    req.db = pool;
+    req.db = db;
     next();
 });
 
